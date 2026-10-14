@@ -1231,7 +1231,7 @@ let state;
     const POMO_RING_CIRC = 2 * Math.PI * 54;
     const POMO_DAILY_GOAL = 4;
     const POMO_WIN_MSGS = ["하나 끝! 🎯", "굿! 또 해냈어", "집중력 레벨업 ✓", "완료! momentum ↑", "잘했어 — 이 속도 유지"];
-    const POMO_BASE_TITLE = document.title || "My ASA Plan";
+    const POMO_BASE_TITLE = document.title || "Yoon Plan";
     const POMO_THEME_DEFAULT = "#faf7f2";
     const POMO_THEME_GREEN = "#4d8a65";
     const POMO_THEME_GOLD = "#a07d2e";

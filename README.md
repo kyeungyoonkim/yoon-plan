@@ -2,7 +2,7 @@
 
 ## 사용법
 
-**사이트:** https://kyeungyoonkim.github.io/soa-plan/
+**사이트:** https://kyeungyoonkim.github.io/yoon-plan/
 
 또는 **`index.html`** (프로젝트 루트)을 브라우저로 열기.
 
