@@ -807,7 +807,7 @@ let state;
     function switchTab(name) {
       document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
       document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.id === "panel-" + name));
-      if (name === "focus" && pomoAwaitingAck) acknowledgePomoEnd();
+      if (name === "focus" && pomoAwaitingAck && !pomoOvertime) acknowledgePomoEnd();
     }
     window.switchTab = switchTab;
 
@@ -1227,6 +1227,8 @@ let state;
     let pomoRunning = false;
     let pomoAwaitingAck = false;
     let pomoEndedAsBreak = false;
+    let pomoOvertime = false;
+    let pomoOvertimeSince = null;
     let pomoAudioCtx = null;
     const POMO_RING_CIRC = 2 * Math.PI * 54;
     const POMO_DAILY_GOAL = 4;
@@ -1346,6 +1348,7 @@ let state;
     }
 
     function runningTitleText(left) {
+      if (pomoOvertime) return `휴식 초과 +${formatPomo(getPomoOvertimeSec())}`;
       const label = pomoMode === "work" ? "집중중" : "휴식중";
       const sec = left == null ? getPomoRemainingSec() : left;
       return `${label} ${formatPomo(Math.max(0, sec))}`;
@@ -1353,7 +1356,7 @@ let state;
 
     function syncPomoTitle(left) {
       if (pomoTitleBlinkInterval) return;
-      if (pomoRunning) document.title = runningTitleText(left);
+      if (pomoOvertime || pomoRunning) document.title = runningTitleText(left);
       else document.title = POMO_BASE_TITLE;
     }
 
@@ -1361,7 +1364,7 @@ let state;
       stopPomoTitleBlink();
       stopPomoTitleRun();
       const tick = () => {
-        if (!pomoRunning) return;
+        if (!pomoRunning && !pomoOvertime) return;
         document.title = runningTitleText();
       };
       tick();
@@ -1369,6 +1372,10 @@ let state;
     }
 
     function acknowledgePomoEnd() {
+      if (pomoOvertime) {
+        finishBreakOvertime();
+        return;
+      }
       if (!pomoAwaitingAck) return;
       pomoAwaitingAck = false;
       stopPomoTitleBlink();
@@ -1672,6 +1679,11 @@ let state;
       return pomoRemainingSec || 0;
     }
 
+    function getPomoOvertimeSec() {
+      if (!pomoOvertimeSince) return 0;
+      return Math.max(0, Math.floor((Date.now() - pomoOvertimeSince) / 1000));
+    }
+
     function stopPomoTicker() {
       clearInterval(pomoInterval);
       pomoInterval = null;
@@ -1684,36 +1696,45 @@ let state;
     }
 
     function setPomoUi(left) {
+      const overtime = pomoOvertime ? getPomoOvertimeSec() : 0;
       const total = pomoPhaseTotalSec || getPomoPhaseTotalSec();
-      const pct = total ? Math.round((1 - left / total) * 100) : 0;
-      document.getElementById("pomoDisplay").textContent = formatPomo(left);
+      const pct = pomoOvertime ? 100 : (total ? Math.round((1 - left / total) * 100) : 0);
+      document.getElementById("pomoDisplay").textContent = pomoOvertime
+        ? `+${formatPomo(overtime)}`
+        : formatPomo(left);
       const modeLabel = document.getElementById("pomoModeLabel");
       if (modeLabel) {
-        if (pomoAwaitingAck) {
+        if (pomoOvertime) {
+          modeLabel.textContent = "휴식 초과";
+        } else if (pomoAwaitingAck) {
           modeLabel.textContent = pomoEndedAsBreak ? "휴식 끝 · 탭 터치" : "집중 완료 · 탭 터치";
         } else {
           modeLabel.textContent = pomoMode === "work" ? "집중" : "휴식";
         }
       }
-      document.getElementById("btnPomoStart").hidden = pomoRunning;
-      document.getElementById("btnPomoPause").hidden = !pomoRunning;
+      document.getElementById("btnPomoStart").hidden = pomoRunning && !pomoOvertime;
+      document.getElementById("btnPomoPause").hidden = !pomoRunning || pomoOvertime;
       const ring = document.getElementById("pomoRingFg");
       if (ring) {
         ring.style.strokeDasharray = POMO_RING_CIRC;
-        ring.style.strokeDashoffset = total ? POMO_RING_CIRC * (left / total) : POMO_RING_CIRC;
+        ring.style.strokeDashoffset = pomoOvertime ? 0 : (total ? POMO_RING_CIRC * (left / total) : POMO_RING_CIRC);
       }
       const bar = document.getElementById("pomoProgressBar");
       if (bar) bar.style.width = pct + "%";
       const hero = document.getElementById("pomoHero");
       if (hero) {
-        hero.classList.toggle("running", pomoRunning);
-        hero.classList.toggle("break-mode", pomoMode === "break");
-        hero.classList.toggle("awaiting-ack", pomoAwaitingAck);
+        hero.classList.toggle("running", pomoRunning || pomoOvertime);
+        hero.classList.toggle("break-mode", pomoMode === "break" || pomoOvertime);
+        hero.classList.toggle("awaiting-ack", pomoAwaitingAck || pomoOvertime);
       }
       const startBtn = document.getElementById("btnPomoStart");
-      if (startBtn) startBtn.textContent = pomoRunning ? "진행 중…" : (pomoAwaitingAck ? "▶ 탭해서 확인" : "▶ 시작");
+      if (startBtn) {
+        startBtn.textContent = pomoOvertime
+          ? "▶ 집중 시작"
+          : (pomoRunning ? "진행 중…" : (pomoAwaitingAck ? "▶ 탭해서 확인" : "▶ 시작"));
+      }
       syncPomoMuteBtn();
-      if (!pomoAwaitingAck) syncPomoTitle(left);
+      if (pomoOvertime || !pomoAwaitingAck) syncPomoTitle(left);
     }
 
     function advancePomoPhase() {
@@ -1743,16 +1764,60 @@ let state;
     }
 
     function updatePomoFromClock() {
+      if (pomoOvertime) {
+        setPomoUi(0);
+        return;
+      }
       const left = getPomoRemainingSec();
       if (pomoRunning && left <= 0) {
+        if (pomoMode === "break") {
+          startBreakOvertime();
+          return;
+        }
         advancePomoPhase();
         return;
       }
       setPomoUi(left);
     }
 
+    function startBreakOvertime() {
+      pomoOvertime = true;
+      pomoOvertimeSince = pomoEndAt || Date.now();
+      pomoRunning = false;
+      pomoEndAt = null;
+      pomoRemainingSec = 0;
+      pomoEndedAsBreak = true;
+      pomoAwaitingAck = true;
+      playPomoChime("break-end");
+      toast("휴식 끝 — 초과 시간 측정 중");
+      startPomoTitleRun();
+      if (!pomoInterval) startPomoTicker();
+      setPomoUi(0);
+    }
+
+    function finishBreakOvertime() {
+      pomoOvertime = false;
+      pomoOvertimeSince = null;
+      pomoAwaitingAck = false;
+      pomoEndedAsBreak = false;
+      pomoMode = "work";
+      pomoPhaseTotalSec = (state.pomodoro.workMin || 25) * 60;
+      pomoRemainingSec = pomoPhaseTotalSec;
+      pomoRunning = false;
+      pomoEndAt = null;
+      stopPomoTicker();
+      stopAllPomoTitles();
+      setPomoUi(pomoRemainingSec);
+    }
+
+    function clearPomoOvertime() {
+      pomoOvertime = false;
+      pomoOvertimeSince = null;
+    }
+
     function switchToPomoBreak() {
       ensurePomodoro();
+      clearPomoOvertime();
       pomoAwaitingAck = false;
       pomoEndedAsBreak = false;
       stopAllPomoTitles();
@@ -1767,6 +1832,7 @@ let state;
 
     function resetPomoDisplay() {
       ensurePomodoro();
+      clearPomoOvertime();
       pomoAwaitingAck = false;
       pomoEndedAsBreak = false;
       stopAllPomoTitles();
@@ -1838,7 +1904,8 @@ let state;
 
     function renderPomodoro() {
       renderPomodoroStats();
-      if (!pomoRunning && !pomoEndAt && pomoRemainingSec === 0) resetPomoDisplay();
+      if (pomoOvertime) updatePomoFromClock();
+      else if (!pomoRunning && !pomoEndAt && pomoRemainingSec === 0) resetPomoDisplay();
       else if (pomoRunning) updatePomoFromClock();
     }
 
@@ -1847,7 +1914,8 @@ let state;
       bindFocusTools.done = true;
 
       document.getElementById("btnPomoStart").onclick = () => {
-        if (pomoAwaitingAck) {
+        if (pomoOvertime) finishBreakOvertime();
+        else if (pomoAwaitingAck) {
           acknowledgePomoEnd();
           return;
         }
@@ -1921,6 +1989,11 @@ let state;
 
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") {
+          if (pomoOvertime) {
+            updatePomoFromClock();
+            startPomoTitleRun();
+            return;
+          }
           if (pomoAwaitingAck) {
             acknowledgePomoEnd();
             return;
@@ -1932,11 +2005,15 @@ let state;
           } else {
             document.title = POMO_BASE_TITLE;
           }
-        } else if (pomoRunning && !pomoTitleBlinkInterval) {
+        } else if ((pomoRunning || pomoOvertime) && !pomoTitleBlinkInterval) {
           startPomoTitleRun();
         }
       });
       window.addEventListener("focus", () => {
+        if (pomoOvertime) {
+          updatePomoFromClock();
+          return;
+        }
         if (pomoAwaitingAck) {
           acknowledgePomoEnd();
           return;
