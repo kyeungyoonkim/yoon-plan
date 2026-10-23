@@ -23,6 +23,7 @@
 
 let state;
     let checklistFilter = "all";
+    let studyEntryDay = "today";
 
     function defaultState() {
       return {
@@ -1605,7 +1606,10 @@ let state;
         logs.map(l => {
           const kind = isPomoStudyLog(l) ? "포모" : "수동";
           const pTag = isExamPStudyLog(l) ? " · P" : "";
-          return `<div class="pomo-log-row"><span class="pomo-log-topic">${formatLogDate(l.date)} · ${escapeHtml(getStudyLogTopicLabel(l.topic))} <span style="color:var(--muted)">${kind}${pTag}</span></span><span class="pomo-log-meta">${l.minutes || 0}분</span></div>`;
+          const del = l.id
+            ? `<button type="button" class="study-log-del" data-study-log-del="${escapeHtml(l.id)}" title="삭제" aria-label="삭제">×</button>`
+            : "";
+          return `<div class="pomo-log-row"><span class="pomo-log-topic">${formatLogDate(l.date)} · ${escapeHtml(getStudyLogTopicLabel(l.topic))} <span style="color:var(--muted)">${kind}${pTag}</span></span><span class="pomo-log-actions"><span class="pomo-log-meta">${l.minutes || 0}분</span>${del}</span></div>`;
         }).join("");
     }
 
@@ -1979,6 +1983,11 @@ let state;
           saveState(true);
           renderPomoStudyLog();
         };
+      });
+      document.getElementById("pomoStudyLog")?.addEventListener("click", e => {
+        const btn = e.target.closest("[data-study-log-del]");
+        if (!btn) return;
+        deleteStudyLog(btn.dataset.studyLogDel);
       });
 
       document.getElementById("pomoHero")?.addEventListener("click", e => {
@@ -2505,17 +2514,29 @@ let state;
         bindTaskList(adminTasksEl, "req");
       }
 
-      const today = localDateStr();
-      const logs = (state.studyLogs || []).filter(l => l.date === today).slice().reverse();
+      const entryDay = studyEntryDay === "yesterday" ? "yesterday" : "today";
+      studyEntryDay = entryDay;
+      const entryDate = entryDay === "yesterday" ? yesterdayIso() : localDateStr();
+      document.querySelectorAll("[data-study-day]").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.studyDay === entryDay);
+      });
+      const dayLabel = document.getElementById("studyLogDayLabel");
+      if (dayLabel) {
+        const tag = entryDay === "yesterday" ? "어제" : "오늘";
+        dayLabel.textContent = `${tag} · ${formatLogDate(entryDate)}에 기록`;
+      }
+      const addBtn = document.getElementById("btnLogStudy");
+      if (addBtn) addBtn.textContent = entryDay === "yesterday" ? "어제 기록 추가" : "오늘 기록 추가";
+      const logs = (state.studyLogs || []).filter(l => l.date === entryDate).slice().reverse();
       document.getElementById("studyLogs").innerHTML = logs.length
         ? logs.map((l) => {
             const pTag = isExamPStudyLog(l) ? " · <span style='color:var(--accent2)'>P</span>" : "";
             return `<li data-study-log-id="${l.id}">
               <span class="study-log-text">${l.minutes}분 · ${escapeHtml(l.topic || "-")}${pTag}</span>
-              <button type="button" class="study-log-del" data-study-log-del="${l.id}" title="삭제" aria-label="삭제">×</button>
+              <button type="button" class="study-log-del" data-study-log-del="${escapeHtml(l.id || "")}" title="삭제" aria-label="삭제">×</button>
             </li>`;
           }).join("")
-        : "<li><span style='color:var(--muted)'>오늘 기록 없음</span></li>";
+        : `<li><span style='color:var(--muted)'>${entryDay === "yesterday" ? "어제" : "오늘"} 기록 없음</span></li>`;
       const weekTotal = getWeekStudyMinutes();
       document.getElementById("weekStudyTotal").textContent = weekTotal;
       renderBudget();
@@ -2564,13 +2585,21 @@ let state;
         saveState(true);
       });
 
+      document.querySelectorAll("[data-study-day]").forEach(btn => {
+        btn.onclick = () => {
+          studyEntryDay = btn.dataset.studyDay === "yesterday" ? "yesterday" : "today";
+          renderTools();
+        };
+      });
+
       document.getElementById("btnLogStudy").onclick = () => {
         const minutes = +document.getElementById("studyMin").value || 0;
         const topic = document.getElementById("studyTopic").value.trim();
         if (!minutes && !topic) { toast("시간 또는 내용 입력"); return; }
         const examP = document.getElementById("studyExamP")?.checked ?? true;
+        const date = studyEntryDay === "yesterday" ? yesterdayIso() : localDateStr();
         if (!state.studyLogs) state.studyLogs = [];
-        state.studyLogs.push({ id: newStudyLogId(), date: localDateStr(), minutes, topic, examP });
+        state.studyLogs.push({ id: newStudyLogId(), date, minutes, topic, examP });
         document.getElementById("studyMin").value = "";
         document.getElementById("studyTopic").value = "";
         saveState();

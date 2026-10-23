@@ -324,12 +324,13 @@
     .pomo-week { text-align: center; font-size: 0.72rem; color: var(--muted); margin-top: 0.35rem; }
     .pomo-week strong { color: var(--accent); }
     .pomo-log-row {
-      display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline;
+      display: flex; justify-content: space-between; gap: 0.5rem; align-items: center;
       padding: 0.3rem 0; border-bottom: 1px solid var(--border); font-size: 0.78rem;
     }
     .pomo-log-row:last-child { border-bottom: none; }
-    .pomo-log-topic { font-weight: 600; color: var(--text); }
+    .pomo-log-topic { font-weight: 600; color: var(--text); min-width: 0; }
     .pomo-log-meta { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
+    .pomo-log-actions { display: flex; align-items: center; gap: 0.1rem; flex-shrink: 0; }
     .pomo-goal-row { display: flex; align-items: center; gap: 0.35rem; justify-content: center; margin-top: 0.25rem; }
     .pomo-goal-row input { width: 3.25rem; margin: 0; text-align: center; padding: 0.3rem; font-size: 0.85rem; }
     .pomo-settings { margin-top: 0.45rem; font-size: 0.75rem; color: var(--muted); }
@@ -739,7 +740,12 @@
           </div>
         </div>
         <div class="card">
-          <div class="card-title">오늘 공부 기록</div>
+          <div class="card-title">공부 기록</div>
+          <div class="filter-row" style="margin-bottom:0.35rem">
+            <button type="button" class="filter-btn active" data-study-day="today">오늘</button>
+            <button type="button" class="filter-btn" data-study-day="yesterday">어제</button>
+          </div>
+          <div class="stat-sub" id="studyLogDayLabel" style="margin:0 0 0.35rem">오늘</div>
           <input type="number" id="studyMin" placeholder="공부 시간 (분)" min="0" max="600" />
           <input type="text" id="studyTopic" placeholder="내용" />
           <label style="font-size:0.75rem;display:flex;align-items:center;gap:0.35rem;margin-top:0.25rem;color:var(--muted)">
@@ -933,7 +939,7 @@
   </div>
   <div class="toast" id="toast">저장됨</div>
 
-  <script src="../js/data.js?v=20261015a"></script>
-  <script defer src="../js/app.js?v=20261015a"></script>
+  <script src="../js/data.js?v=20261023a"></script>
+  <script defer src="../js/app.js?v=20261023a"></script>
 </body>
 </html>
