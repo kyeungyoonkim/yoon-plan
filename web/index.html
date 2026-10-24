@@ -270,6 +270,9 @@
     }
     .pomo-topic:focus { box-shadow: 0 0 0 2px var(--accent-dim); }
     .pomo-actions { display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.55rem; }
+    .stopwatch-card.running { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
+    .stopwatch-time { font-family: "Instrument Serif", Georgia, serif; font-size: clamp(1.8rem, 6vw, 2.3rem); line-height: 1; color: var(--accent2); text-align: center; margin: 0.15rem 0 0.45rem; }
+    .stopwatch-card.running .stopwatch-time { color: var(--accent); }
     .btn-pomo-go {
       font: inherit; font-size: 0.88rem; font-weight: 700;
       padding: 0.45rem 1.25rem; border: none; border-radius: 999px;
@@ -723,6 +726,22 @@
         </details>
       </div>
 
+      <div class="card stopwatch-card" id="stopwatchCard" style="margin-top:0.55rem">
+        <div class="card-title">스톱워치</div>
+        <div class="stopwatch-time" id="stopwatchDisplay">0:00</div>
+        <input type="text" id="stopwatchTopic" class="pomo-topic" placeholder="지금 할 일" />
+        <div class="pomo-actions">
+          <button type="button" class="btn-pomo-go" id="btnSwStart">▶ 시작</button>
+          <button type="button" class="btn-action" id="btnSwPause" hidden>일시정지</button>
+          <button type="button" class="btn-action" id="btnSwReset">리셋</button>
+          <button type="button" class="btn-action primary" id="btnSwLog">기록</button>
+        </div>
+        <label style="font-size:0.75rem;display:flex;align-items:center;gap:0.35rem;justify-content:center;color:var(--muted)">
+          <input type="checkbox" id="stopwatchExamP" /> Exam P 순공으로 기록
+        </label>
+        <div class="stat-sub" style="text-align:center;margin-top:0.35rem">멈춘 뒤 기록하면 공부시간에 더해집니다</div>
+      </div>
+
       <div class="grid grid-2" style="margin-top:0.55rem">
         <div class="card">
           <div class="card-title">이번 주 공부 목표</div>
@@ -939,7 +958,7 @@
   </div>
   <div class="toast" id="toast">저장됨</div>
 
-  <script src="../js/data.js?v=20261023a"></script>
-  <script defer src="../js/app.js?v=20261023a"></script>
+  <script src="../js/data.js?v=20261024a"></script>
+  <script defer src="../js/app.js?v=20261024a"></script>
 </body>
 </html>

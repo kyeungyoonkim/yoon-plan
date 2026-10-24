@@ -35,6 +35,7 @@ let state;
         weeklyTodoWeek: "", weeklyTodoChecked: {},
         budgetSpent:0, pomoLogRange:"week",
         pomodoro:{ workMin:25, breakMin:5, dailyGoal:4, todayCount:0, lastDate:"", topic:"", muted:false },
+        stopwatch:{ running:false, startedAt:null, elapsedMs:0, topic:"", examP:false },
         careerPipeline:[], timelineCollapsed:{}
       };
     }
@@ -1514,6 +1515,9 @@ let state;
       const pomo = t.match(/^pomodoro:\s*(.*)$/i);
       if (pomo) return (pomo[1] || "").trim() || "주제 없음";
       if (/^pomodoro\s*집중$/i.test(t)) return "집중";
+      const sw = t.match(/^스톱워치:\s*(.*)$/);
+      if (sw) return (sw[1] || "").trim() || "스톱워치";
+      if (t === "스톱워치") return "스톱워치";
       return t || "주제 없음";
     }
 
@@ -1604,7 +1608,7 @@ let state;
         ).join("") +
         `<div class="stat-sub" style="margin:0.55rem 0 0.2rem">건별 기록</div>` +
         logs.map(l => {
-          const kind = isPomoStudyLog(l) ? "포모" : "수동";
+          const kind = isPomoStudyLog(l) ? "포모" : /^스톱워치/.test(l.topic || "") ? "스톱워치" : "수동";
           const pTag = isExamPStudyLog(l) ? " · P" : "";
           const del = l.id
             ? `<button type="button" class="study-log-del" data-study-log-del="${escapeHtml(l.id)}" title="삭제" aria-label="삭제">×</button>`
@@ -1913,6 +1917,130 @@ let state;
       else if (pomoRunning) updatePomoFromClock();
     }
 
+    let swInterval = null;
+
+    function ensureStopwatch() {
+      if (!state.stopwatch) state.stopwatch = { running:false, startedAt:null, elapsedMs:0, topic:"", examP:false };
+    }
+
+    function getStopwatchElapsedMs() {
+      ensureStopwatch();
+      const sw = state.stopwatch;
+      if (sw.running && sw.startedAt) return (sw.elapsedMs || 0) + (Date.now() - sw.startedAt);
+      return sw.elapsedMs || 0;
+    }
+
+    function formatStopwatch(ms) {
+      const s = Math.max(0, Math.floor((ms || 0) / 1000));
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const r = s % 60;
+      if (h) return `${h}:${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+      return `${m}:${String(r).padStart(2, "0")}`;
+    }
+
+    function isStopwatchRunning() {
+      return !!(state && state.stopwatch && state.stopwatch.running);
+    }
+
+    function syncStopwatchTitle() {
+      if (pomoRunning || pomoOvertime || pomoTitleBlinkInterval) return;
+      if (isStopwatchRunning()) document.title = `스톱워치 ${formatStopwatch(getStopwatchElapsedMs())}`;
+    }
+
+    function startStopwatchTicker() {
+      stopStopwatchTicker();
+      renderStopwatch();
+      swInterval = setInterval(renderStopwatch, 250);
+    }
+
+    function stopStopwatchTicker() {
+      if (swInterval) {
+        clearInterval(swInterval);
+        swInterval = null;
+      }
+    }
+
+    function renderStopwatch() {
+      const el = document.getElementById("stopwatchDisplay");
+      if (!el) return;
+      ensureStopwatch();
+      const running = isStopwatchRunning();
+      el.textContent = formatStopwatch(getStopwatchElapsedMs());
+      const card = document.getElementById("stopwatchCard");
+      if (card) card.classList.toggle("running", running);
+      const startBtn = document.getElementById("btnSwStart");
+      const pauseBtn = document.getElementById("btnSwPause");
+      if (startBtn) startBtn.hidden = running;
+      if (pauseBtn) pauseBtn.hidden = !running;
+      const topicEl = document.getElementById("stopwatchTopic");
+      if (topicEl && document.activeElement !== topicEl) topicEl.value = state.stopwatch.topic || "";
+      const examEl = document.getElementById("stopwatchExamP");
+      if (examEl && document.activeElement !== examEl) examEl.checked = !!state.stopwatch.examP;
+      syncStopwatchTitle();
+    }
+
+    function startStopwatch() {
+      ensureStopwatch();
+      if (pomoRunning || pomoOvertime) {
+        toast("뽀모도로를 먼저 멈춰 주세요");
+        return;
+      }
+      if (state.stopwatch.running) return;
+      state.stopwatch.startedAt = Date.now();
+      state.stopwatch.running = true;
+      saveState(true);
+      startStopwatchTicker();
+    }
+
+    function pauseStopwatch() {
+      ensureStopwatch();
+      if (!state.stopwatch.running) return;
+      state.stopwatch.elapsedMs = getStopwatchElapsedMs();
+      state.stopwatch.startedAt = null;
+      state.stopwatch.running = false;
+      saveState(true);
+      stopStopwatchTicker();
+      renderStopwatch();
+      if (!pomoRunning && !pomoOvertime) document.title = POMO_BASE_TITLE;
+    }
+
+    function resetStopwatch() {
+      ensureStopwatch();
+      state.stopwatch.running = false;
+      state.stopwatch.startedAt = null;
+      state.stopwatch.elapsedMs = 0;
+      saveState(true);
+      stopStopwatchTicker();
+      renderStopwatch();
+      if (!pomoRunning && !pomoOvertime) document.title = POMO_BASE_TITLE;
+    }
+
+    function logStopwatch() {
+      ensureStopwatch();
+      if (state.stopwatch.running) pauseStopwatch();
+      const ms = getStopwatchElapsedMs();
+      const minutes = Math.max(1, Math.round(ms / 60000));
+      if (ms < 10000) { toast("10초 이상 재고 기록해 주세요"); return; }
+      const topicRaw = (document.getElementById("stopwatchTopic")?.value || state.stopwatch.topic || "").trim();
+      const examP = document.getElementById("stopwatchExamP")?.checked ?? !!state.stopwatch.examP;
+      if (!state.studyLogs) state.studyLogs = [];
+      state.studyLogs.push({
+        id: newStudyLogId(),
+        date: localDateStr(),
+        minutes,
+        topic: topicRaw ? `스톱워치: ${topicRaw}` : "스톱워치",
+        examP
+      });
+      state.stopwatch.elapsedMs = 0;
+      state.stopwatch.startedAt = null;
+      state.stopwatch.running = false;
+      saveState(true);
+      stopStopwatchTicker();
+      render();
+      toast(`${minutes}분 기록됨`);
+    }
+
     function bindFocusTools() {
       if (bindFocusTools.done) return;
       bindFocusTools.done = true;
@@ -1926,6 +2054,10 @@ let state;
         ensurePomodoro();
         unlockPomoAudio();
         if (!pomoRunning) {
+          if (isStopwatchRunning()) {
+            toast("스톱워치를 먼저 멈춰 주세요");
+            return;
+          }
           stopAllPomoTitles();
           if (pomoRemainingSec === 0 && !pomoEndAt) {
             if (pomoMode === "break") switchToPomoBreak();
@@ -1977,6 +2109,20 @@ let state;
         saveState(true);
         renderPomodoroStats();
       };
+      document.getElementById("btnSwStart").onclick = () => startStopwatch();
+      document.getElementById("btnSwPause").onclick = () => pauseStopwatch();
+      document.getElementById("btnSwReset").onclick = () => resetStopwatch();
+      document.getElementById("btnSwLog").onclick = () => logStopwatch();
+      document.getElementById("stopwatchTopic").oninput = e => {
+        ensureStopwatch();
+        state.stopwatch.topic = e.target.value;
+        saveState(true);
+      };
+      document.getElementById("stopwatchExamP").onchange = e => {
+        ensureStopwatch();
+        state.stopwatch.examP = e.target.checked;
+        saveState(true);
+      };
       document.querySelectorAll("[data-pomo-log]").forEach(btn => {
         btn.onclick = () => {
           state.pomoLogRange = normalizePomoLogRange(btn.dataset.pomoLog);
@@ -2011,6 +2157,8 @@ let state;
           if (pomoRunning) {
             updatePomoFromClock();
             startPomoTitleRun();
+          } else if (isStopwatchRunning()) {
+            syncStopwatchTitle();
           } else {
             document.title = POMO_BASE_TITLE;
           }
@@ -2027,6 +2175,10 @@ let state;
           acknowledgePomoEnd();
           return;
         }
+        if (isStopwatchRunning()) {
+          syncStopwatchTitle();
+          return;
+        }
         if (!pomoRunning) {
           stopPomoTitleBlink();
           document.title = POMO_BASE_TITLE;
@@ -2037,6 +2189,9 @@ let state;
     function renderFocus() {
       bindFocusTools();
       renderPomodoro();
+      ensureStopwatch();
+      if (isStopwatchRunning()) startStopwatchTicker();
+      else renderStopwatch();
     }
 
     function renderTemple() {
