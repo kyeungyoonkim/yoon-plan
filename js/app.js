@@ -937,11 +937,7 @@ let state;
 
     function isExamPStudyLog(log) {
       if (!log) return false;
-      if (log.examP === true || log.category === "exam-p") return true;
-      if (log.examP === false) return false;
-      const topic = String(log.topic || "").toLowerCase();
-      if (/5108|5104|rmi|hcm|temple|canvas|숙제|uec|리뷰|review|as 510|exam fm|fm 독학/.test(topic)) return false;
-      return /exam\s*p|tia|probability|\bp\b|오답|practice exam|롱셋|클리닉|multivariate|survival/.test(topic);
+      return log.examP === true || log.category === "exam-p";
     }
 
     function getWeekExamPMinutes() {
@@ -1119,9 +1115,9 @@ let state;
       if (pSt === "failed") {
         alert.style.display = "block";
         alert.innerHTML = `<strong>Exam P 불합격</strong> — 다음 window 준비.`;
-      } else if (getExamStatus("exam-fm") !== "passed" && getExamStatus("exam-fm") !== "failed") {
+      } else if (getExamStatus("exam-p") !== "passed" && getExamStatus("exam-p") !== "failed") {
         alert.style.display = "block";
-        alert.innerHTML = `<strong>Exam FM</strong> — 등록 마감 11/4 10AM CT · 목표 12/14. P는 미룸.`;
+        alert.innerHTML = `<strong>Exam P</strong> — 1월 말 (1/14–25) · 등록 마감 12/15. FM은 봄학기 수업.`;
       } else if (!isReqChecked("vee-stats-check") && phase.id === "sem1") {
         alert.style.display = "block";
         alert.innerHTML = `<strong>VEE Math Statistics</strong> — Temple 담당자에게 Purdue 학점 면제 확인!`;
@@ -1863,13 +1859,16 @@ let state;
       const workMin = +(state.pomodoro.workMin || 25);
       const topic = (document.getElementById("pomoTopic")?.value || state.pomodoro.topic || "").trim();
       state.pomodoro.topic = topic;
+      const pomoExamEl = document.getElementById("pomoExamP");
+      const examP = !!pomoExamEl?.checked;
+      if (pomoExamEl) pomoExamEl.checked = false;
       if (!state.studyLogs) state.studyLogs = [];
       state.studyLogs.push({
         id: newStudyLogId(),
         date: today,
         minutes: workMin,
         topic: topic ? `Pomodoro: ${topic}` : "Pomodoro 집중",
-        examP: isExamPStudyLog({ topic: topic ? `Pomodoro: ${topic}` : "Pomodoro 집중" })
+        examP
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       scheduleCloudSync();
@@ -1975,8 +1974,6 @@ let state;
       if (pauseBtn) pauseBtn.hidden = !running;
       const topicEl = document.getElementById("stopwatchTopic");
       if (topicEl && document.activeElement !== topicEl) topicEl.value = state.stopwatch.topic || "";
-      const examEl = document.getElementById("stopwatchExamP");
-      if (examEl && document.activeElement !== examEl) examEl.checked = !!state.stopwatch.examP;
       syncStopwatchTitle();
     }
 
@@ -2023,7 +2020,8 @@ let state;
       const minutes = Math.max(1, Math.round(ms / 60000));
       if (ms < 10000) { toast("10초 이상 재고 기록해 주세요"); return; }
       const topicRaw = (document.getElementById("stopwatchTopic")?.value || state.stopwatch.topic || "").trim();
-      const examP = document.getElementById("stopwatchExamP")?.checked ?? !!state.stopwatch.examP;
+      const examEl = document.getElementById("stopwatchExamP");
+      const examP = !!examEl?.checked;
       if (!state.studyLogs) state.studyLogs = [];
       state.studyLogs.push({
         id: newStudyLogId(),
@@ -2035,6 +2033,8 @@ let state;
       state.stopwatch.elapsedMs = 0;
       state.stopwatch.startedAt = null;
       state.stopwatch.running = false;
+      state.stopwatch.examP = false;
+      if (examEl) examEl.checked = false;
       saveState(true);
       stopStopwatchTicker();
       render();
@@ -2228,18 +2228,18 @@ let state;
       const logged = getWeekStudyMinutes();
       const goal = state.weeklyStudyGoal || DEFAULT_WEEKLY_STUDY_GOAL;
 
-      if (getExamStatus("exam-fm") === "failed") {
-        el.innerHTML = `<div><span class="hours-big">재응시</span> <span class="stat-sub">Exam FM 불합격 · 다음 window</span></div>
-        <p class="stat-sub" style="margin-top:0.5rem">약점 복습 후 재응시. P는 미룸.</p>`;
-      } else if (getExamStatus("exam-fm") !== "passed") {
-        el.innerHTML = `<div><span class="hours-big">FM</span> <span class="stat-sub">Exam FM · <strong>TIA 독학</strong> · 목표 <strong>12/14</strong></span></div>
-        <p class="stat-sub" style="margin-top:0.5rem">window 12/3–14 · 등록 마감 <strong>11/4 10AM CT</strong> · P는 미룸 (겨울에 GRE / Micro / P 결정).</p>`;
-      } else if (getExamStatus("exam-p") === "failed") {
+      if (getExamStatus("exam-p") === "failed") {
         el.innerHTML = `<div><span class="hours-big">재응시</span> <span class="stat-sub">Exam P 불합격 · 다음 window</span></div>
         <p class="stat-sub" style="margin-top:0.5rem">약점 파트 복습 후 재응시.</p>`;
       } else if (getExamStatus("exam-p") !== "passed") {
-        el.innerHTML = `<div><span class="hours-big">미룸</span> <span class="stat-sub">Exam P · 겨울에 <strong>GRE / Micro / P</strong> 결정</span></div>
-        <p class="stat-sub" style="margin-top:0.5rem">치면 Jan 14–25 · 등록 12/15. 세 개 동시에 하지 말기.</p>`;
+        el.innerHTML = `<div><span class="hours-big">P</span> <span class="stat-sub">Exam P · <strong>TIA</strong> · 목표 <strong>1월 말</strong></span></div>
+        <p class="stat-sub" style="margin-top:0.5rem">window 1/14–25 · 등록 마감 <strong>12/15</strong> · FM은 봄학기 AS 5101.</p>`;
+      } else if (getExamStatus("exam-fm") === "failed") {
+        el.innerHTML = `<div><span class="hours-big">재응시</span> <span class="stat-sub">Exam FM 불합격 · 다음 window</span></div>
+        <p class="stat-sub" style="margin-top:0.5rem">AS 5101 복습 후 재응시.</p>`;
+      } else if (getExamStatus("exam-fm") !== "passed") {
+        el.innerHTML = `<div><span class="hours-big">FM</span> <span class="stat-sub">AS 5101 수업 · SOA는 <strong>봄 이후</strong></span></div>
+        <p class="stat-sub" style="margin-top:0.5rem">12월 독학 안 함 · Spring 네 과목과 함께.</p>`;
       } else if (getExamStatus("exam-pa") === "failed") {
         el.innerHTML = `<div><span class="hours-big">재응시</span> <span class="stat-sub">Exam PA 불합격 · SRM(5108+5118) 기반 복습</span></div>
         <p class="stat-sub" style="margin-top:0.5rem">predictive modeling · R/Python 연습 강화 후 재응시.</p>`;
@@ -2751,12 +2751,14 @@ let state;
         const minutes = +document.getElementById("studyMin").value || 0;
         const topic = document.getElementById("studyTopic").value.trim();
         if (!minutes && !topic) { toast("시간 또는 내용 입력"); return; }
-        const examP = document.getElementById("studyExamP")?.checked ?? true;
+        const examP = document.getElementById("studyExamP")?.checked ?? false;
         const date = studyEntryDay === "yesterday" ? yesterdayIso() : localDateStr();
         if (!state.studyLogs) state.studyLogs = [];
         state.studyLogs.push({ id: newStudyLogId(), date, minutes, topic, examP });
         document.getElementById("studyMin").value = "";
         document.getElementById("studyTopic").value = "";
+        const studyExamP = document.getElementById("studyExamP");
+        if (studyExamP) studyExamP.checked = false;
         saveState();
       };
 
