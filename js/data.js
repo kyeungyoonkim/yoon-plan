@@ -9,7 +9,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       { id:"tc-rmi5104", name:"RMI 5104 Property & Liability", credits:3, group:"Selective (1/3) · 2026 Fall", soa:"—" },
       { id:"tc-5101", name:"AS 5101 Theory of Interest (FM 수업)", credits:3, group:"Core · 2027 Spring", soa:"Exam FM 수업으로 · SOA 시험은 수업 후" },
       { id:"tc-5102", name:"AS 5102 Long-Term Actuarial Modeling", credits:3, group:"Core · 2027 Spring", soa:"FAM UEC" },
-      { id:"tc-rmi5051", name:"RMI 5051 Managing Risk (required)", credits:3, group:"Core · 2027 Spring", soa:"RMI 5101 아님 · 5101은 Human Capital 선택" },
+      { id:"tc-rmi5051", name:"RMI 5051 Managing Risk", credits:3, group:"Core · 2027 Spring", soa:"—" }
       { id:"tc-sel-2", name:"AS 5118 Advanced Actuarial Analytics", credits:3, group:"Selective (2/3) · 2027 Spring", soa:"SRM UEC (2/2)" },
       { id:"tc-sel-1", name:"AS 5114 Advanced Short-Term Modeling", credits:3, group:"Selective (3/3) · 2027 Fall", soa:"ASTAM UEC" },
       { id:"tc-hcm5101", name:"Elective (3 cr)", credits:3, group:"Elective (1/2) · 이후 수강", soa:"—" },
@@ -425,7 +425,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
         { id:"as-5101", text:"AS 5101 Theory of Interest (FM 수업)", meta:"Core 3cr · SOA FM은 수업 이후 여름", highlight:true },
         { id:"as-5102-5104", text:"AS 5102 Long-Term Modeling → FAM UEC", meta:"Fall 5104 이미 수강 · 5101 동시수강 Advisor 확인", highlight:true },
         { id:"as-5118", text:"AS 5118 Advanced Analytics → SRM UEC (2/2)", meta:"5108(Fall) + 5118 · Selective · PA 기반", highlight:true },
-        { id:"rmi-5051", text:"RMI 5051 Managing Risk (required)", meta:"Core · RMI 5101 아님 · 5101은 Human Capital 선택(이미 5104)", highlight:true },
+        { id:"rmi-5051", text:"RMI 5051 Managing Risk", meta:"Core · Spring 2027", highlight:true },
         { id:"paf", text:"PAF Module (P 합격 후)", meta:"P 1월 성적 후 · FM SOA는 5101 수업 이후", highlight:true },
         { id:"fap-12", text:"FAP Module 1 & 2", meta:"PAF 직후", highlight:true },
         { id:"prep-pa-start", text:"Exam PA 기초 (5118·SRM과 함께)", meta:"R/Python·GLM 감각 · 본격 준비는 여름~Fall", highlight:true },
@@ -629,7 +629,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
           { text: "SOA Exam FM", url: "https://www.soa.org/education/exam-req/edu-exam-fm-detail/" },
           { text: "Temple AS 5101", url: "https://bulletin.temple.edu/graduate/courses/as/" }
         ],
-        alt: "RMI 5101은 Human Capital 선택과목 · required는 RMI 5051"
+        alt: null
       },
       {
         when: "2027 · Exam PA (10/12–15)",
