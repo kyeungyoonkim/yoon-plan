@@ -19,8 +19,6 @@
     function unlockApp() {
       document.body.classList.remove("locked");
       document.getElementById("auth-gate").hidden = true;
-      const pw = document.getElementById("authPassword");
-      if (pw) pw.blur();
     }
 
 let state;
@@ -524,70 +522,65 @@ let state;
       return ensureStudyLogIds(migrateStudyLogLocalDates(next));
     }
 
-    function parseStored(raw) {
-      if (!raw) return null;
-      try {
-        const p = JSON.parse(raw);
-        return p && typeof p === "object" && !Array.isArray(p) ? p : null;
-      } catch {
-        return null;
-      }
-    }
-
-    function storedStateScore(p) {
-      if (!p) return -1;
-      return (p.studyLogs || []).length * 10
-        + Object.keys(p.reqChecked || p.checked || {}).length
-        + Object.keys(p.timelineChecked || {}).length
-        + Object.keys(p.templeChecked || {}).length
-        + Object.keys(p.projectChecked || {}).length
-        + (p.weeklyMemo ? 2 : 0)
-        + ((p.pomodoro && p.pomodoro.todayCount) || 0);
-    }
-
-    function hydrateParsed(p) {
-      const base = defaultState();
-      const reqChecked = p.reqChecked || p.checked || {};
-      return withDefaultSchedule({
-        ...base, ...p,
-        reqChecked,
-        timelineChecked: p.timelineChecked || {},
-        templeChecked: p.templeChecked || {},
-        examStatus: migrateExamStatus(reqChecked, p.examStatus),
-      });
-    }
-
     function loadState() {
       try {
-        const candidates = [
-          parseStored(localStorage.getItem(STORAGE_KEY)),
-          parseStored(localStorage.getItem(STORAGE_KEY + "-bak")),
-          parseStored(localStorage.getItem("soa-asa-plan-v5")),
-          parseStored(localStorage.getItem("soa-asa-plan-v4")),
-          parseStored(localStorage.getItem("soa-asa-plan-v3"))
-        ].filter(Boolean);
-        if (!candidates.length) {
-          return withDefaultSchedule({ ...defaultState(), examStatus: migrateExamStatus({}) });
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const v5 = localStorage.getItem("soa-asa-plan-v5");
+        const v4 = localStorage.getItem("soa-asa-plan-v4");
+        const v3 = localStorage.getItem("soa-asa-plan-v3");
+        const base = defaultState();
+        if (raw) {
+          const p = JSON.parse(raw);
+          const reqChecked = p.reqChecked || {};
+          return withDefaultSchedule({
+            ...base, ...p,
+            reqChecked,
+            timelineChecked: p.timelineChecked || {},
+            templeChecked: p.templeChecked || {},
+            examStatus: migrateExamStatus(reqChecked, p.examStatus),
+          });
         }
-        candidates.sort((a, b) => storedStateScore(b) - storedStateScore(a));
-        return hydrateParsed(candidates[0]);
+        if (v5) {
+          const p = JSON.parse(v5);
+          const reqChecked = p.reqChecked || {};
+          return withDefaultSchedule({
+            ...base, ...p,
+            reqChecked,
+            timelineChecked: p.timelineChecked || {},
+            templeChecked: p.templeChecked || {},
+            examStatus: migrateExamStatus(reqChecked, p.examStatus),
+            schedule: p.schedule || []
+          });
+        }
+        if (v4) {
+          const p = JSON.parse(v4);
+          const reqChecked = p.checked || {};
+          return withDefaultSchedule({
+            ...base, ...p,
+            reqChecked,
+            timelineChecked: {},
+            templeChecked: {},
+            examStatus: migrateExamStatus(reqChecked),
+            schedule: p.schedule || []
+          });
+        }
+        if (v3) {
+          const p = JSON.parse(v3);
+          const reqChecked = p.checked || {};
+          return withDefaultSchedule({
+            ...base,
+            reqChecked,
+            examStatus: migrateExamStatus(reqChecked),
+            schedule: p.schedule || []
+          });
+        }
+        return withDefaultSchedule({ ...base, examStatus: migrateExamStatus({}) });
       } catch { return withDefaultSchedule({ ...defaultState(), examStatus: migrateExamStatus({}) }); }
     }
 
-    function persistState() {
-      try {
-        const prevRaw = localStorage.getItem(STORAGE_KEY);
-        const prev = parseStored(prevRaw);
-        if (prev && (prev.studyLogs || []).length) {
-          localStorage.setItem(STORAGE_KEY + "-bak", prevRaw);
-        }
-      } catch { /* ignore */ }
+    function saveState(quiet) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       scheduleCloudSync();
-    }
-
-    function saveState(quiet) {
-      persistState();
       if (!quiet) toast("저장됨");
       render();
     }
@@ -944,7 +937,11 @@ let state;
 
     function isExamPStudyLog(log) {
       if (!log) return false;
-      return log.examP === true || log.category === "exam-p";
+      if (log.examP === true || log.category === "exam-p") return true;
+      if (log.examP === false) return false;
+      const topic = String(log.topic || "").toLowerCase();
+      if (/5108|5104|rmi|hcm|temple|canvas|숙제|uec|리뷰|review|as 510|exam fm|fm 독학/.test(topic)) return false;
+      return /exam\s*p|tia|probability|\bp\b|오답|practice exam|롱셋|클리닉|multivariate|survival/.test(topic);
     }
 
     function getWeekExamPMinutes() {
@@ -1124,7 +1121,7 @@ let state;
         alert.innerHTML = `<strong>Exam P 불합격</strong> — 다음 window 준비.`;
       } else if (getExamStatus("exam-p") !== "passed" && getExamStatus("exam-p") !== "failed") {
         alert.style.display = "block";
-        alert.innerHTML = `<strong>Exam P</strong> — 1월 말 (1/14–25) · 등록 마감 12/15. FM은 봄학기 수업.`;
+        alert.innerHTML = `<strong>Exam P</strong> — 등록 마감 12/15 · 응시 1/14–25 (1월 말). FM은 봄 5101 수업.`;
       } else if (!isReqChecked("vee-stats-check") && phase.id === "sem1") {
         alert.style.display = "block";
         alert.innerHTML = `<strong>VEE Math Statistics</strong> — Temple 담당자에게 Purdue 학점 면제 확인!`;
@@ -1866,16 +1863,13 @@ let state;
       const workMin = +(state.pomodoro.workMin || 25);
       const topic = (document.getElementById("pomoTopic")?.value || state.pomodoro.topic || "").trim();
       state.pomodoro.topic = topic;
-      const pomoExamEl = document.getElementById("pomoExamP");
-      const examP = !!pomoExamEl?.checked;
-      if (pomoExamEl) pomoExamEl.checked = false;
       if (!state.studyLogs) state.studyLogs = [];
       state.studyLogs.push({
         id: newStudyLogId(),
         date: today,
         minutes: workMin,
         topic: topic ? `Pomodoro: ${topic}` : "Pomodoro 집중",
-        examP
+        examP: false
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       scheduleCloudSync();
@@ -1972,14 +1966,9 @@ let state;
       if (!el) return;
       ensureStopwatch();
       const running = isStopwatchRunning();
-      const ms = getStopwatchElapsedMs();
-      el.textContent = formatStopwatch(ms);
+      el.textContent = formatStopwatch(getStopwatchElapsedMs());
       const card = document.getElementById("stopwatchCard");
       if (card) card.classList.toggle("running", running);
-      const badge = document.getElementById("stopwatchModeLabel");
-      if (badge) badge.textContent = running ? "기록 중" : "경과";
-      const bar = document.getElementById("stopwatchBar");
-      if (bar) bar.style.width = `${((ms / 1000) % 60) / 60 * 100}%`;
       const startBtn = document.getElementById("btnSwStart");
       const pauseBtn = document.getElementById("btnSwPause");
       if (startBtn) startBtn.hidden = running;
@@ -2113,7 +2102,7 @@ let state;
       };
       document.getElementById("pomoTopic").oninput = e => {
         state.pomodoro.topic = e.target.value;
-        persistState();
+        saveState(true);
       };
       document.getElementById("pomoDailyGoal").onchange = e => {
         ensurePomodoro();
@@ -2128,7 +2117,7 @@ let state;
       document.getElementById("stopwatchTopic").oninput = e => {
         ensureStopwatch();
         state.stopwatch.topic = e.target.value;
-        persistState();
+        saveState(true);
       };
       document.getElementById("stopwatchExamP").onchange = e => {
         ensureStopwatch();
@@ -2242,16 +2231,16 @@ let state;
 
       if (getExamStatus("exam-p") === "failed") {
         el.innerHTML = `<div><span class="hours-big">재응시</span> <span class="stat-sub">Exam P 불합격 · 다음 window</span></div>
-        <p class="stat-sub" style="margin-top:0.5rem">약점 파트 복습 후 재응시.</p>`;
+        <p class="stat-sub" style="margin-top:0.5rem">약점 파트 복습 후 재응시. FM은 봄 5101 수업.</p>`;
       } else if (getExamStatus("exam-p") !== "passed") {
-        el.innerHTML = `<div><span class="hours-big">P</span> <span class="stat-sub">Exam P · <strong>TIA</strong> · 목표 <strong>1월 말</strong></span></div>
-        <p class="stat-sub" style="margin-top:0.5rem">window 1/14–25 · 등록 마감 <strong>12/15</strong> · FM은 봄학기 AS 5101.</p>`;
+        el.innerHTML = `<div><span class="hours-big">P</span> <span class="stat-sub">Exam P · <strong>TIA</strong> · 목표 <strong>1월 말</strong> (1/14–25)</span></div>
+        <p class="stat-sub" style="margin-top:0.5rem">등록 마감 <strong>12/15</strong> · FM은 <strong>봄 5101 수업</strong> (SOA 시험 안 침).</p>`;
       } else if (getExamStatus("exam-fm") === "failed") {
-        el.innerHTML = `<div><span class="hours-big">재응시</span> <span class="stat-sub">Exam FM 불합격 · 다음 window</span></div>
-        <p class="stat-sub" style="margin-top:0.5rem">AS 5101 복습 후 재응시.</p>`;
+        el.innerHTML = `<div><span class="hours-big">수업</span> <span class="stat-sub">FM · AS 5101 Spring</span></div>
+        <p class="stat-sub" style="margin-top:0.5rem">SOA 재응시 대신 5101 Theory of Interest.</p>`;
       } else if (getExamStatus("exam-fm") !== "passed") {
-        el.innerHTML = `<div><span class="hours-big">FM</span> <span class="stat-sub">AS 5101 수업 · SOA는 <strong>봄 이후</strong></span></div>
-        <p class="stat-sub" style="margin-top:0.5rem">12월 독학 안 함 · Spring 네 과목과 함께.</p>`;
+        el.innerHTML = `<div><span class="hours-big">수업</span> <span class="stat-sub">Spring · 5102 · 5118 · 5101 FM · RMI 5051</span></div>
+        <p class="stat-sub" style="margin-top:0.5rem">FM은 SOA 시험 대신 <strong>AS 5101</strong>.</p>`;
       } else if (getExamStatus("exam-pa") === "failed") {
         el.innerHTML = `<div><span class="hours-big">재응시</span> <span class="stat-sub">Exam PA 불합격 · SRM(5108+5118) 기반 복습</span></div>
         <p class="stat-sub" style="margin-top:0.5rem">predictive modeling · R/Python 연습 강화 후 재응시.</p>`;
@@ -2734,6 +2723,10 @@ let state;
       checklistFilter = state.checklistFilter || "all";
       // Persist auto-migrated Fall 2026 schedule version
       saveState(true);
+      ["studyExamP", "stopwatchExamP"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.checked = false;
+      });
       startStudyDayWatch();
 
       document.getElementById("nav").addEventListener("click", e => {
@@ -2743,13 +2736,13 @@ let state;
       const weeklyMemoInput = document.getElementById("weeklyMemo");
       if (weeklyMemoInput) weeklyMemoInput.addEventListener("input", e => {
         state.weeklyMemo = e.target.value;
-        persistState();
+        saveState(true);
       });
 
       const adminMemoInput = document.getElementById("adminMemo");
       if (adminMemoInput) adminMemoInput.addEventListener("input", e => {
         state.adminMemo = e.target.value;
-        persistState();
+        saveState(true);
       });
 
       document.querySelectorAll("[data-study-day]").forEach(btn => {
