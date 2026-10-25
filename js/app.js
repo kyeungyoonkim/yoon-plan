@@ -582,6 +582,8 @@ let state;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       scheduleCloudSync();
       if (!quiet) toast("저장됨");
+      const ae = document.activeElement;
+      if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.tagName === "SELECT")) return;
       render();
     }
 
