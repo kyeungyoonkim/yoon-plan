@@ -19,6 +19,8 @@
     function unlockApp() {
       document.body.classList.remove("locked");
       document.getElementById("auth-gate").hidden = true;
+      const pw = document.getElementById("authPassword");
+      if (pw) pw.blur();
     }
 
 let state;
@@ -522,68 +524,71 @@ let state;
       return ensureStudyLogIds(migrateStudyLogLocalDates(next));
     }
 
+    function parseStored(raw) {
+      if (!raw) return null;
+      try {
+        const p = JSON.parse(raw);
+        return p && typeof p === "object" && !Array.isArray(p) ? p : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function storedStateScore(p) {
+      if (!p) return -1;
+      return (p.studyLogs || []).length * 10
+        + Object.keys(p.reqChecked || p.checked || {}).length
+        + Object.keys(p.timelineChecked || {}).length
+        + Object.keys(p.templeChecked || {}).length
+        + Object.keys(p.projectChecked || {}).length
+        + (p.weeklyMemo ? 2 : 0)
+        + ((p.pomodoro && p.pomodoro.todayCount) || 0);
+    }
+
+    function hydrateParsed(p) {
+      const base = defaultState();
+      const reqChecked = p.reqChecked || p.checked || {};
+      return withDefaultSchedule({
+        ...base, ...p,
+        reqChecked,
+        timelineChecked: p.timelineChecked || {},
+        templeChecked: p.templeChecked || {},
+        examStatus: migrateExamStatus(reqChecked, p.examStatus),
+      });
+    }
+
     function loadState() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        const v5 = localStorage.getItem("soa-asa-plan-v5");
-        const v4 = localStorage.getItem("soa-asa-plan-v4");
-        const v3 = localStorage.getItem("soa-asa-plan-v3");
-        const base = defaultState();
-        if (raw) {
-          const p = JSON.parse(raw);
-          const reqChecked = p.reqChecked || {};
-          return withDefaultSchedule({
-            ...base, ...p,
-            reqChecked,
-            timelineChecked: p.timelineChecked || {},
-            templeChecked: p.templeChecked || {},
-            examStatus: migrateExamStatus(reqChecked, p.examStatus),
-          });
+        const candidates = [
+          parseStored(localStorage.getItem(STORAGE_KEY)),
+          parseStored(localStorage.getItem(STORAGE_KEY + "-bak")),
+          parseStored(localStorage.getItem("soa-asa-plan-v5")),
+          parseStored(localStorage.getItem("soa-asa-plan-v4")),
+          parseStored(localStorage.getItem("soa-asa-plan-v3"))
+        ].filter(Boolean);
+        if (!candidates.length) {
+          return withDefaultSchedule({ ...defaultState(), examStatus: migrateExamStatus({}) });
         }
-        if (v5) {
-          const p = JSON.parse(v5);
-          const reqChecked = p.reqChecked || {};
-          return withDefaultSchedule({
-            ...base, ...p,
-            reqChecked,
-            timelineChecked: p.timelineChecked || {},
-            templeChecked: p.templeChecked || {},
-            examStatus: migrateExamStatus(reqChecked, p.examStatus),
-            schedule: p.schedule || []
-          });
-        }
-        if (v4) {
-          const p = JSON.parse(v4);
-          const reqChecked = p.checked || {};
-          return withDefaultSchedule({
-            ...base, ...p,
-            reqChecked,
-            timelineChecked: {},
-            templeChecked: {},
-            examStatus: migrateExamStatus(reqChecked),
-            schedule: p.schedule || []
-          });
-        }
-        if (v3) {
-          const p = JSON.parse(v3);
-          const reqChecked = p.checked || {};
-          return withDefaultSchedule({
-            ...base,
-            reqChecked,
-            examStatus: migrateExamStatus(reqChecked),
-            schedule: p.schedule || []
-          });
-        }
-        return withDefaultSchedule({ ...base, examStatus: migrateExamStatus({}) });
+        candidates.sort((a, b) => storedStateScore(b) - storedStateScore(a));
+        return hydrateParsed(candidates[0]);
       } catch { return withDefaultSchedule({ ...defaultState(), examStatus: migrateExamStatus({}) }); }
     }
 
-    function saveState(quiet) {
+    function persistState() {
+      try {
+        const prevRaw = localStorage.getItem(STORAGE_KEY);
+        const prev = parseStored(prevRaw);
+        if (prev && (prev.studyLogs || []).length) {
+          localStorage.setItem(STORAGE_KEY + "-bak", prevRaw);
+        }
+      } catch { /* ignore */ }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       scheduleCloudSync();
+    }
+
+    function saveState(quiet) {
+      persistState();
       if (!quiet) toast("저장됨");
-      const ae = document.activeElement;
-      if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.tagName === "SELECT")) return;
       render();
     }
 
@@ -2108,7 +2113,7 @@ let state;
       };
       document.getElementById("pomoTopic").oninput = e => {
         state.pomodoro.topic = e.target.value;
-        saveState(true);
+        persistState();
       };
       document.getElementById("pomoDailyGoal").onchange = e => {
         ensurePomodoro();
@@ -2123,7 +2128,7 @@ let state;
       document.getElementById("stopwatchTopic").oninput = e => {
         ensureStopwatch();
         state.stopwatch.topic = e.target.value;
-        saveState(true);
+        persistState();
       };
       document.getElementById("stopwatchExamP").onchange = e => {
         ensureStopwatch();
@@ -2738,13 +2743,13 @@ let state;
       const weeklyMemoInput = document.getElementById("weeklyMemo");
       if (weeklyMemoInput) weeklyMemoInput.addEventListener("input", e => {
         state.weeklyMemo = e.target.value;
-        saveState(true);
+        persistState();
       });
 
       const adminMemoInput = document.getElementById("adminMemo");
       if (adminMemoInput) adminMemoInput.addEventListener("input", e => {
         state.adminMemo = e.target.value;
-        saveState(true);
+        persistState();
       });
 
       document.querySelectorAll("[data-study-day]").forEach(btn => {
