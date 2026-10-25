@@ -239,8 +239,6 @@
       background: linear-gradient(165deg, var(--surface) 0%, rgba(77,138,101,0.07) 100%);
       border-color: rgba(77,138,101,0.22);
       box-shadow: 0 4px 16px rgba(77,138,101,0.08);
-      display: flex;
-      flex-direction: column;
     }
     .pomo-hero.running { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim), 0 4px 16px rgba(77,138,101,0.12); }
     .pomo-hero.running.break-mode { border-color: var(--accent2); box-shadow: 0 0 0 2px var(--accent2-dim), 0 4px 16px rgba(160,125,46,0.1); }
@@ -272,40 +270,9 @@
     }
     .pomo-topic:focus { box-shadow: 0 0 0 2px var(--accent-dim); }
     .pomo-actions { display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.55rem; }
-    .stopwatch-card {
-      padding: 0.85rem 0.95rem 0.8rem;
-      background: linear-gradient(165deg, var(--surface) 0%, rgba(77,138,101,0.07) 100%);
-      border-color: rgba(77,138,101,0.22);
-      box-shadow: 0 4px 16px rgba(77,138,101,0.08);
-      display: flex;
-      flex-direction: column;
-    }
-    .stopwatch-card.running { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim), 0 4px 16px rgba(77,138,101,0.12); }
-    .stopwatch-face {
-      position: relative;
-      width: min(132px, 38vw);
-      margin: 0 auto 0.5rem;
-      aspect-ratio: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      border: 6px solid var(--surface2);
-      box-sizing: border-box;
-    }
-    .stopwatch-card.running .stopwatch-face { border-color: var(--accent); }
-    .stopwatch-time {
-      font-family: "Instrument Serif", Georgia, serif;
-      font-size: clamp(1.7rem, 6vw, 2.1rem);
-      line-height: 1;
-      color: var(--accent2);
-      text-align: center;
-      margin: 0;
-    }
+    .stopwatch-card.running { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
+    .stopwatch-time { font-family: "Instrument Serif", Georgia, serif; font-size: clamp(1.8rem, 6vw, 2.3rem); line-height: 1; color: var(--accent2); text-align: center; margin: 0.15rem 0 0.45rem; }
     .stopwatch-card.running .stopwatch-time { color: var(--accent); }
-    .stopwatch-card .pomo-mode-badge { margin-top: 0.2rem; }
-    .stopwatch-card.running .pomo-mode-badge { background: var(--accent-dim); color: var(--accent); }
     .btn-pomo-go {
       font: inherit; font-size: 0.88rem; font-weight: 700;
       padding: 0.45rem 1.25rem; border: none; border-radius: 999px;
@@ -380,9 +347,8 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0.55rem;
-      align-items: stretch;
+      align-items: start;
     }
-    #panel-focus .timer-row > .card { min-height: 0; }
     @media (max-width: 760px) { #panel-focus .timer-row { grid-template-columns: 1fr; } }
     #panel-focus .pomo-inline-settings { margin: 0 0 0.35rem; gap: 0.45rem; }
     #panel-focus .pomo-inline-settings label { font-size: 0.72rem; color: var(--muted); }
@@ -741,14 +707,8 @@
       </div>
 
       <div class="card stopwatch-card" id="stopwatchCard">
-        <div class="pomo-hero-top">
-          <div class="card-title" style="margin-bottom:0">스톱워치</div>
-        </div>
-        <div class="stopwatch-face">
-          <div class="stopwatch-time" id="stopwatchDisplay">0:00</div>
-          <div class="pomo-mode-badge" id="stopwatchModeLabel">경과</div>
-        </div>
-        <div class="pomo-bar-wrap"><div class="pomo-bar-fill" id="stopwatchBar" style="width:0%"></div></div>
+        <div class="card-title">스톱워치</div>
+        <div class="stopwatch-time" id="stopwatchDisplay">0:00</div>
         <input type="text" id="stopwatchTopic" class="pomo-topic" placeholder="지금 할 일" />
         <div class="pomo-actions">
           <button type="button" class="btn-pomo-go" id="btnSwStart">▶ 시작</button>
@@ -756,10 +716,10 @@
           <button type="button" class="btn-action" id="btnSwReset">리셋</button>
           <button type="button" class="btn-action primary" id="btnSwLog">기록</button>
         </div>
-        <div class="stat-sub" style="text-align:center;margin:0 0 0.35rem">멈춘 뒤 기록하면 공부시간에 더해집니다</div>
-        <label style="font-size:0.75rem;display:flex;align-items:center;gap:0.35rem;justify-content:center;color:var(--muted);margin-bottom:0.2rem;margin-top:auto">
+        <label style="font-size:0.75rem;display:flex;align-items:center;gap:0.35rem;justify-content:center;color:var(--muted)">
           <input type="checkbox" id="stopwatchExamP" /> Exam P 순공으로 기록
         </label>
+        <div class="stat-sub" style="text-align:center;margin-top:0.35rem">멈춘 뒤 기록하면 공부시간에 더해집니다</div>
       </div>
       </div>
 
@@ -951,7 +911,7 @@
             <tr><td>AS 5108 + 5118</td><td class="cat-uec">SRM UEC</td><td><strong>둘 다 필요</strong> · 5108 Fall + 5118 Spring · → <strong>PA 10/2027</strong> 기반</td></tr>
             <tr><td>AS 5114</td><td class="cat-uec">ASTAM UEC</td><td>Selective 3 · 2027 Fall</td></tr>
             <tr><td>RMI 5104</td><td class="cat-career">Selective 1</td><td>월·수 11:00–12:15 · <strong>온라인</strong> · 2026 Fall</td></tr>
-            <tr><td>RMI 5051</td><td class="cat-career">Core</td><td>Managing Risk · 2027 Spring</td></tr>
+            <tr><td>RMI 5051</td><td class="cat-career">Core</td><td>Managing Risk · required · 2027 Spring</td></tr>
             <tr><td>Elective (3 cr)</td><td class="cat-career">Elective 1/2</td><td>이후 수강 · Advisor 확인</td></tr>
             <tr><td>Elective 2</td><td class="cat-career">Elective 2/2</td><td>2027 Fall · Advisor 확인</td></tr>
           </tbody>
@@ -1013,7 +973,7 @@
   </div>
   <div class="toast" id="toast">저장됨</div>
 
-  <script src="../js/data.js?v=20261025e"></script>
-  <script defer src="../js/app.js?v=20261025e"></script>
+  <script src="../js/data.js?v=20261025b"></script>
+  <script defer src="../js/app.js?v=20261025b"></script>
 </body>
 </html>
