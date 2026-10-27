@@ -34,8 +34,8 @@ const STORAGE_KEY = "soa-asa-plan-v6";
     const DEFAULT_WEEKLY_STUDY_GOAL = 1800; // 30h/week
     const DEFAULT_WEEKLY_EXAM_P_GOAL = 1320; // ~22h/week · Exam P 블록 기준
     const EXAM_P_TOTAL_GOAL = 6600; // 110h · 1월 말 응시
-    const EXAM_P_TRACK_FROM = "2026-08-24";
-    const EXAM_P_TRACK_UNTIL = "2026-11-15";
+    const EXAM_P_TRACK_FROM = "2026-11-01";
+    const EXAM_P_TRACK_UNTIL = "2027-01-25";
     const STUDY_GOAL_VERSION = 4;
 
     // Fixed weekly todos · shown on 시간표/캘린더 · checkbox resets each Monday

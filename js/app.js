@@ -35,7 +35,7 @@ let state;
         weeklyTodoWeek: "", weeklyTodoChecked: {},
         budgetSpent:0, pomoLogRange:"week",
         pomodoro:{ workMin:25, breakMin:5, dailyGoal:4, todayCount:0, lastDate:"", topic:"", muted:false },
-        stopwatch:{ running:false, startedAt:null, elapsedMs:0, topic:"", examP:false },
+        stopwatch:{ running:false, startedAt:null, elapsedMs:0, topic:"" },
         careerPipeline:[], timelineCollapsed:{}
       };
     }
@@ -938,23 +938,35 @@ let state;
     function isExamPStudyLog(log) {
       if (!log) return false;
       if (log.examP === true || log.category === "exam-p") return true;
-      if (log.examP === false) return false;
-      const topic = String(log.topic || "").toLowerCase();
-      if (/5108|5104|rmi|hcm|temple|canvas|숙제|uec|리뷰|review|as 510|exam fm|fm 독학/.test(topic)) return false;
-      return /exam\s*p|tia|probability|\bp\b|오답|practice exam|롱셋|클리닉|multivariate|survival/.test(topic);
+      const raw = String(log.topic || "").trim();
+      const t = raw.toLowerCase();
+      if (/\bexam\s*pa\b/.test(t)) return false;
+      if (/\bexam\s*p\b|\btia\s*p\b/.test(t)) return true;
+      if (/(^|[\s:：·\-])p($|[\s:：·\-])/i.test(raw) && !/pomodoro|python|\bfm\b|\bpa\b/i.test(t)) return true;
+      return false;
+    }
+
+    function isExamPTrackDate(iso) {
+      const ds = String(iso || "");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(ds)) return false;
+      if (EXAM_P_TRACK_FROM && ds < EXAM_P_TRACK_FROM) return false;
+      if (EXAM_P_TRACK_UNTIL && ds > EXAM_P_TRACK_UNTIL) return false;
+      return true;
+    }
+
+    function examPLogs() {
+      return (state.studyLogs || []).filter(l => isExamPTrackDate(l.date) && isExamPStudyLog(l));
     }
 
     function getWeekExamPMinutes() {
       const weekStart = getWeekStart();
-      return (state.studyLogs || [])
-        .filter(l => parseLocalDate(l.date) >= weekStart && isExamPStudyLog(l))
+      return examPLogs()
+        .filter(l => parseLocalDate(l.date) >= weekStart)
         .reduce((s, l) => s + (+l.minutes || 0), 0);
     }
 
     function getTotalExamPMinutes() {
-      return (state.studyLogs || [])
-        .filter(l => isExamPStudyLog(l))
-        .reduce((s, l) => s + (+l.minutes || 0), 0);
+      return examPLogs().reduce((s, l) => s + (+l.minutes || 0), 0);
     }
 
     function applyBackupPayload(p) {
@@ -1868,8 +1880,7 @@ let state;
         id: newStudyLogId(),
         date: today,
         minutes: workMin,
-        topic: topic ? `Pomodoro: ${topic}` : "Pomodoro 집중",
-        examP: false
+        topic: topic ? `Pomodoro: ${topic}` : "Pomodoro 집중"
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       scheduleCloudSync();
@@ -1920,7 +1931,7 @@ let state;
     let swInterval = null;
 
     function ensureStopwatch() {
-      if (!state.stopwatch) state.stopwatch = { running:false, startedAt:null, elapsedMs:0, topic:"", examP:false };
+      if (!state.stopwatch) state.stopwatch = { running:false, startedAt:null, elapsedMs:0, topic:"" };
     }
 
     function getStopwatchElapsedMs() {
@@ -2021,21 +2032,16 @@ let state;
       const minutes = Math.max(1, Math.round(ms / 60000));
       if (ms < 10000) { toast("10초 이상 재고 기록해 주세요"); return; }
       const topicRaw = (document.getElementById("stopwatchTopic")?.value || state.stopwatch.topic || "").trim();
-      const examEl = document.getElementById("stopwatchExamP");
-      const examP = !!examEl?.checked;
       if (!state.studyLogs) state.studyLogs = [];
       state.studyLogs.push({
         id: newStudyLogId(),
         date: localDateStr(),
         minutes,
-        topic: topicRaw ? `스톱워치: ${topicRaw}` : "스톱워치",
-        examP
+        topic: topicRaw ? `스톱워치: ${topicRaw}` : "스톱워치"
       });
       state.stopwatch.elapsedMs = 0;
       state.stopwatch.startedAt = null;
       state.stopwatch.running = false;
-      state.stopwatch.examP = false;
-      if (examEl) examEl.checked = false;
       saveState(true);
       stopStopwatchTicker();
       render();
@@ -2117,11 +2123,6 @@ let state;
       document.getElementById("stopwatchTopic").oninput = e => {
         ensureStopwatch();
         state.stopwatch.topic = e.target.value;
-        saveState(true);
-      };
-      document.getElementById("stopwatchExamP").onchange = e => {
-        ensureStopwatch();
-        state.stopwatch.examP = e.target.checked;
         saveState(true);
       };
       document.querySelectorAll("[data-pomo-log]").forEach(btn => {
@@ -2576,7 +2577,9 @@ let state;
         examPPctEl.title = `누적 ${pTotalPct}% (${minutesToHoursLabel(pTotalDone)}h / ${minutesToHoursLabel(pTotalGoal)}h)`;
       }
       const weekExamPEl = document.getElementById("weekExamPTotal");
-      if (weekExamPEl) weekExamPEl.textContent = getWeekExamPMinutes();
+      if (weekExamPEl) weekExamPEl.textContent = minutesToHoursLabel(getWeekExamPMinutes());
+      const examPFromEl = document.getElementById("examPTrackFrom");
+      if (examPFromEl) examPFromEl.textContent = "11월 이후";
     }
 
     function renderStudyRecommendations() {
@@ -2723,10 +2726,6 @@ let state;
       checklistFilter = state.checklistFilter || "all";
       // Persist auto-migrated Fall 2026 schedule version
       saveState(true);
-      ["studyExamP", "stopwatchExamP"].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.checked = false;
-      });
       startStudyDayWatch();
 
       document.getElementById("nav").addEventListener("click", e => {
@@ -2756,14 +2755,11 @@ let state;
         const minutes = +document.getElementById("studyMin").value || 0;
         const topic = document.getElementById("studyTopic").value.trim();
         if (!minutes && !topic) { toast("시간 또는 내용 입력"); return; }
-        const examP = document.getElementById("studyExamP")?.checked ?? false;
         const date = studyEntryDay === "yesterday" ? yesterdayIso() : localDateStr();
         if (!state.studyLogs) state.studyLogs = [];
-        state.studyLogs.push({ id: newStudyLogId(), date, minutes, topic, examP });
+        state.studyLogs.push({ id: newStudyLogId(), date, minutes, topic });
         document.getElementById("studyMin").value = "";
         document.getElementById("studyTopic").value = "";
-        const studyExamP = document.getElementById("studyExamP");
-        if (studyExamP) studyExamP.checked = false;
         saveState();
       };
 
