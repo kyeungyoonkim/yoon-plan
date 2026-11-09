@@ -11,7 +11,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       { id:"tc-5102", name:"AS 5102 Long-Term Actuarial Modeling", credits:3, group:"Core · 2027 Spring", soa:"FAM UEC" },
       { id:"tc-sel-2", name:"AS 5118 Advanced Actuarial Analytics", credits:3, group:"Selective (2/3) · 2027 Spring", soa:"SRM UEC (2/2)" },
       { id:"tc-rmi5051", name:"RMI 5051 Managing Risk", credits:3, group:"Core · 2027 Spring · required", soa:"—" },
-      { id:"tc-sel-1", name:"AS 5114 Advanced Short-Term Modeling", credits:3, group:"Selective (3/3) · 2027 Fall", soa:"ASTAM UEC" },
+      { id:"tc-sel-1", name:"AS 5114 Advanced Long Term Modeling", credits:3, group:"Selective (3/3) · 2027 Fall", soa:"ASTAM UEC" },
       { id:"tc-hcm5101", name:"Elective (3 cr)", credits:3, group:"Elective (1/2) · 2027 Fall", soa:"—" },
       { id:"tc-elec-2", name:"Elective (추가 1과목)", credits:3, group:"Elective (2/2) · 3 cr · 2027 Fall", soa:"—" }
     ];
@@ -404,10 +404,8 @@ const STORAGE_KEY = "soa-asa-plan-v6";
         { id:"ba-5687", text:"BA 5687 Professional Dev", meta:"0 cr · 토 3회 (10/3·10/24·11/7)" },
         { id:"exam-p-reg", text:"Exam P 등록", meta:"마감 12/15 · 응시 1/14–25", highlight:true },
         { id:"exam-p", text:"Exam P 준비 (1월 말)", meta:"window 1/14–25 · 등록 12/15 · TIA P", highlight:true },
-        { id:"as-5101-plan", text:"FM은 봄 5101 수업", meta:"SOA FM 시험 안 침 · Theory of Interest", highlight:true },
-        { id:"proj-health", text:"Health rate memo (SAS) start", meta:"after P (9/22~) · same work as Oct hackathon", highlight:true },
+        { id:"project", text:"project", meta:"Health rate memo + Life term memo", highlight:true },
         { id:"sas-hackathon", text:"SAS Student Hackathon", meta:"10/1 시작 · 10/30 마감 · Health rate memo와 동일 작업", highlight:true },
-        { id:"proj-life", text:"Life term memo (assumption memo)", meta:"after hackathon deadline 10/30 · P 시즌엔 최소", highlight:true },
         { id:"shi-research", text:"Health policy research track", meta:"Mullachery · Hollin · Research 탭 · PhD 타깃", highlight:true },
         { id:"oncampus-job", text:"온캠퍼스 잡 바로 지원", meta:"입학 즉시" },
         { id:"vee-stats-check", text:"VEE Math Statistics — Purdue 학점 Temple 면제 확인", meta:"입학 직후!", highlight:true },
@@ -416,7 +414,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       { id:"winter", name:"겨울방학", period:"2026년 12/16 ~ 2027년 1/25", start:"2026-12-16", end:"2027-01-25", tasks:[
         { id:"winter-p", text:"Exam P 마무리 · 1월 말 응시", meta:"window 1/14–25 · 등록 12/15 · TIA P 스프린트", highlight:true },
         { id:"exam-p-sit", text:"Exam P 응시 (1/14–25)", meta:"1월 말 window · practice exam 70%+", highlight:true },
-        { id:"gre", text:"GRE (선택 · PhD Plan B)", meta:"P 끝난 뒤 · 이번 겨울 본업 아님", highlight:false },
+        { id:"gre", text:"GRE diagnosis", meta:"P 끝난 뒤 · PhD Plan B", highlight:false },
         { id:"vee-econ", text:"VEE Microeconomics (CLEP · 선택)", meta:"Modern States 무료 · P 끝난 뒤", highlight:false },
         { id:"intern-confirm", text:"인턴 확정", meta:"커리어" },
         { id:"sas-advanced", text:"SAS Advanced (선택)", meta:"겨울방학에 응시 · Base 이후", highlight:true },
@@ -441,7 +439,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
         { id:"atpa", text:"ATPA Assessment", meta:"Assessment" }
       ]},
       { id:"sem3", name:"3학기 (Fall Y2)", period:"2027년 8/24 ~ 12/15", start:"2027-08-24", end:"2027-12-15", tasks:[
-        { id:"as-5114", text:"AS 5114 → ASTAM UEC", meta:"Selective 3 · Fall 2027", highlight:true },
+        { id:"as-5114", text:"AS 5114 Advanced Long Term Modeling → ASTAM UEC", meta:"Selective 3 · Fall 2027", highlight:true },
         { id:"exam-pa", text:"Exam PA 응시 (10/12–15)", meta:"등록 마감 9/14 11:59 PM · 성적 ~11월 말", highlight:true },
         { id:"hcm-5101", text:"Elective (3 cr)", meta:"이후 수강 · Advisor 확인", highlight:true },
         { id:"elective-2", text:"Elective 2 (추가 1과목)", meta:"Elective 2/2 · Fall 2027" },
@@ -469,7 +467,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       { id:"vee-acct", cat:"vee", name:"VEE Accounting & Finance", method:"이미 통과", when:"완료", order:4 },
       { id:"as-5102-5104", cat:"uec", name:"Exam FAM", method:"AS 5102 & 5104 UEC", when:"2학기", order:7 },
       { id:"as-5108", cat:"uec", name:"Exam SRM", method:"AS 5108(Fall) + AS 5118(Spring) UEC · 둘 다 필요", when:"Fall Y1 → Spring Y1", order:6 },
-      { id:"as-5114", cat:"uec", name:"Exam ASTAM", method:"AS 5114 UEC", when:"3학기", order:10 },
+      { id:"as-5114", cat:"uec", name:"Exam ASTAM", method:"AS 5114 Advanced Long Term Modeling UEC", when:"3학기", order:10 },
       { id:"paf", cat:"module", name:"PAF Module", method:"e-Learning · P(1월) + 5101 FM credit 후", when:"Spring 후반", order:6 },
       { id:"asf", cat:"module", name:"ASF Module", method:"e-Learning · PAF+FAM+SRM credit 후", when:"2027 여름", order:8 },
       { id:"fap-12", cat:"module", name:"FAP 1-2", method:"e-Learning · PAF 직후", when:"Spring 초", order:12 },
@@ -498,7 +496,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
     // Temple Registrar 공식 캘린더 기준 (Fall 2026 · Spring 2027)
     // Fall 2027은 미발표 → Fall 2026 패턴으로 잠정
     const DDAYS = [
-      { date:"2026-09-22", label:"Health rate memo start", taskId:"proj-health" },
+      { date:"2026-09-22", label:"project", taskId:"project" },
       { date:"2026-10-01", label:"SAS Hackathon 시작", taskId:"sas-hackathon" },
       { date:"2026-10-30", label:"SAS Hackathon 마감", taskId:"sas-hackathon" },
       { date:"2026-12-15", label:"Exam P 등록 마감", taskId:"exam-p-reg" },
@@ -684,7 +682,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       { exam:"SAS Base Certification", min:40, max:80, typical:60, plan:"2026-08-23 합격 ✓", tips:"완료 · 이력서·LinkedIn 반영 · Advanced는 겨울방학 선택", done:true },
       { exam:"Exam FM", min:0, max:0, typical:0, plan:"AS 5101 수업 (Spring)", tips:"SOA 시험 안 침 · Theory of Interest · 봄 네 과목 중 하나" },
       { exam:"Exam PA", min:400, max:600, typical:500, plan:"10/12–15 · 등록 9/14", tips:"500h · 여름~Fall · SRM(5108+5118) 끝난 뒤" },
-      { exam:"UEC (FAM/SRM/ASTAM)", min:0, max:0, typical:0, plan:"Temple 수업", tips:"FM=SOA 시험 · FAM=5102+5104 · SRM=5108+5118 · ASTAM=5114 · B- 이상" },
+      { exam:"UEC (FAM/SRM/ASTAM)", min:0, max:0, typical:0, plan:"Temple 수업", tips:"FM=SOA 시험 · FAM=5102+5104 · SRM=5108+5118 · ASTAM=5114 Advanced Long Term · B- 이상" },
       { exam:"PAF / ASF / FAP", min:20, max:40, typical:30, plan:"Spring 초 PAF → FAP · 2027 여름 ASF", tips:"모듈당 대략 20–40시간. ASF는 FAM+SRM credit 후 · ASA 목표는 2028년 1–3월." }
     ];
 
