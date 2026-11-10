@@ -11,7 +11,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       { id:"tc-5102", name:"AS 5102 Long-Term Actuarial Modeling", credits:3, group:"Core · 2027 Spring", soa:"FAM UEC" },
       { id:"tc-sel-2", name:"AS 5118 Advanced Actuarial Analytics", credits:3, group:"Selective (2/3) · 2027 Spring", soa:"SRM UEC (2/2)" },
       { id:"tc-rmi5051", name:"RMI 5051 Managing Risk", credits:3, group:"Core · 2027 Spring · required", soa:"—" },
-      { id:"tc-sel-1", name:"AS 5114 Advanced Long Term Modeling", credits:3, group:"Selective (3/3) · 2027 Fall", soa:"ASTAM UEC" },
+      { id:"tc-sel-1", name:"AS 5114 Advanced Long Term Modeling", credits:3, group:"Selective (3/3) · 2027 Fall", soa:"ALTAM UEC" },
       { id:"tc-hcm5101", name:"Elective (3 cr)", credits:3, group:"Elective (1/2) · 2027 Fall", soa:"—" },
       { id:"tc-elec-2", name:"Elective (추가 1과목)", credits:3, group:"Elective (2/2) · 3 cr · 2027 Fall", soa:"—" }
     ];
@@ -30,7 +30,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
     const FALL_2026_SCHEDULE_VERSION = 6;
     const CIRC = 2 * Math.PI * 30;
     const JOURNEY_START = "2026-01-01";
-    const JOURNEY_END = "2028-03-01";
+    const JOURNEY_END = "2028-06-01";
     const DEFAULT_WEEKLY_STUDY_GOAL = 1800; // 30h/week
     const DEFAULT_WEEKLY_EXAM_P_GOAL = 1320; // ~22h/week · Exam P 블록 기준
     const EXAM_P_TOTAL_GOAL = 6600; // 110h · 1월 말 응시
@@ -421,34 +421,35 @@ const STORAGE_KEY = "soa-asa-plan-v6";
         { id:"winter-rest", text:"휴식", meta:"컨디션" }
       ]},
       { id:"sem2", name:"2학기 (Spring Y1)", period:"2027년 1/11 ~ 5/4", start:"2027-01-11", end:"2027-05-04", tasks:[
-        { id:"as-5101", text:"AS 5101 Theory of Interest (FM 수업)", meta:"SOA FM 시험 대신 · Core 3cr", highlight:true },
+        { id:"as-5101", text:"AS 5101 Theory of Interest → FM UEC", meta:"수업 · SOA FM 시험 안 침", highlight:true },
         { id:"as-5102-5104", text:"AS 5102 Long-Term Modeling → FAM UEC 완성", meta:"Fall 5104 + Spring 5102", highlight:true },
-        { id:"as-5118", text:"AS 5118 Advanced Analytics → SRM UEC (2/2)", meta:"5108(Fall) + 5118 · Selective · PA 기반", highlight:true },
+        { id:"as-5118", text:"AS 5118 Advanced Analytics → SRM UEC (2/2)", meta:"5108(Fall)+5118 · PA 등록에 SRM credit 필요", highlight:true },
         { id:"rmi-5051", text:"RMI 5051 Managing Risk", meta:"Core required · Spring 2027", highlight:true },
-        { id:"paf", text:"PAF Module (P + 5101 FM credit 후)", meta:"P 1월 · 5101 학점 반영 후 · Spring 후반", highlight:true },
-        { id:"fap-12", text:"FAP Module 1 & 2", meta:"PAF 직후", highlight:true },
-        { id:"prep-pa-start", text:"Exam PA 기초 (5118·SRM과 함께)", meta:"R/Python·GLM 감각 · 본격 준비는 여름~Fall", highlight:true },
-        { id:"cpt-pt", text:"CPT 파트타임 인턴", meta:"커리어" },
-        { id:"fap-34", text:"FAP Module 3 & 4", meta:"수업·인턴 병행" }
+        { id:"uec-apply", text:"성적 나오면 UEC 바로 신청", meta:"SRM·FAM·FM · PA 등록(9/14) 전에 SRM credit", highlight:true },
+        { id:"cpt-pt", text:"CPT 파트타임 인턴", meta:"커리어" }
       ]},
       { id:"summer", name:"여름방학", period:"2027년 6월 ~ 8월", start:"2027-06-01", end:"2027-08-31", tasks:[
-        { id:"cpt-ft", text:"CPT 풀타임 인턴", meta:"커리어", highlight:true },
-        { id:"asf", text:"ASF Module", meta:"FAM+SRM credit 반영 직후 · PAF 완료 후", highlight:true },
-        { id:"prep-pa", text:"Exam PA 본격 준비 (~500h)", meta:"SRM(5108+5118) 완료 후 · CA PA / Mahler · 10월 목표", highlight:true },
-        { id:"fap-5", text:"FAP Module 5", meta:"Final 전 완료", highlight:true },
-        { id:"atpa", text:"ATPA Assessment", meta:"Assessment" }
+        { id:"paf", text:"PAF 시작 (여름 초)", meta:"P+FM credit 후 · e-Learning 수시 · ASF와 동시 불가", highlight:true },
+        { id:"prep-pa", text:"Exam PA 집중 (100–150h)", meta:"여름~10월 · SRM credit 필요 · 10/12–15 Prometric", highlight:true },
+        { id:"asf", text:"ASF (PAF credit 반영 후)", meta:"PAF·SRM·FAM 필요 · PAF와 순차 · PA 공부와 병행", highlight:true },
+        { id:"cpt-ft", text:"CPT 풀타임 인턴", meta:"커리어", highlight:true }
       ]},
       { id:"sem3", name:"3학기 (Fall Y2)", period:"2027년 8/24 ~ 12/15", start:"2027-08-24", end:"2027-12-15", tasks:[
-        { id:"as-5114", text:"AS 5114 Advanced Long Term Modeling → ASTAM UEC", meta:"Selective 3 · Fall 2027", highlight:true },
-        { id:"exam-pa", text:"Exam PA 응시 (10/12–15)", meta:"등록 마감 9/14 11:59 PM · 성적 ~11월 말", highlight:true },
+        { id:"exam-pa-reg", text:"Exam PA 등록", meta:"마감 9/14 11:59 PM · SRM credit 필수 · 일정 변경 불가", highlight:true },
+        { id:"exam-pa", text:"Exam PA (10/12–15)", meta:"Prometric 하루 · CBT · 등록 9/14", highlight:true },
+        { id:"as-5114", text:"AS 5114 Advanced Long Term Modeling → ALTAM UEC", meta:"2027.12 · SOA ALTAM 시험 안 침", highlight:true },
         { id:"hcm-5101", text:"Elective (3 cr)", meta:"이후 수강 · Advisor 확인", highlight:true },
         { id:"elective-2", text:"Elective 2 (추가 1과목)", meta:"Elective 2/2 · Fall 2027" },
-        { id:"fap-final", text:"FAP 최종 평가", meta:"모듈 완료 후", highlight:true },
         { id:"graduate", text:"Temple MS 졸업", meta:"2027.12", highlight:true }
       ]},
-      { id:"post", name:"졸업 후 · ASA 마무리", period:"2028년 1월 ~ 3월", start:"2028-01-01", end:"2028-03-31", tasks:[
-        { id:"apc", text:"APC 참석", meta:"PA 성적(~11월 말)·ASTAM·FAP Final 등 전부 후 · 초대제", highlight:true },
-        { id:"asa", text:"ASA 완성", meta:"목표 2028년 1–3월 · 졸업(12월) 직후", highlight:true },
+      { id:"post", name:"PA 이후 · ASA 마무리", period:"2027년 11월 ~ 2028년 6월", start:"2027-11-01", end:"2028-06-30", tasks:[
+        { id:"fap-12", text:"FAP 시작 (PA 이후)", meta:"등록 조건 없음 · SOA는 PAF→ASF 먼저 권장 · 24개월 안에 완료", highlight:true },
+        { id:"fap-34", text:"FAP 모듈 진행", meta:"EMA 수시 제출", highlight:true },
+        { id:"fap-5", text:"FAP 모듈 마무리", meta:"Final 전", highlight:true },
+        { id:"fap-final", text:"FAP Final Assessment", meta:"목표 FA 2028-02 (2/1–5/31) · 연 3회 · 놓치면 밀림", highlight:true },
+        { id:"atpa", text:"ATPA (2028 · 2–4월 윈도우)", meta:"연 3회 · 목표 Feb–Apr 2028 · APC 전", highlight:true },
+        { id:"apc", text:"APC (맨 마지막)", meta:"PA·ALTAM·FAP Final·ATPA 등 전부 후 초대", highlight:true },
+        { id:"asa", text:"ASA 완성", meta:"APC 후 · 2028", highlight:true },
         { id:"sas-clinical", text:"SAS Clinical (선택)", meta:"제약·임상 진로 시" }
       ]}
     ];
@@ -456,7 +457,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
     const REQUIREMENTS = [
       { id:"exam-fm", cat:"exam", name:"Exam FM", method:"AS 5101 Theory of Interest · 2027 Spring 수업 · SOA 시험 안 침 (UEC)", when:"Spring Y1", order:5 },
       { id:"exam-p", cat:"exam", name:"Exam P", method:"SOA 시험 · 2027.1/14–25 (1월 말) · 등록 마감 12/15 · TIA P", when:"겨울 · 1월 말", order:0 },
-      { id:"exam-pa", cat:"exam", name:"Exam PA", method:"2027.10/12–15 · 등록 마감 9/14 11:59 PM · SRM(5108+5118) 완료 후 · 성적 ~11월 말", when:"Fall Y2", order:11 },
+      { id:"exam-pa", cat:"exam", name:"Exam PA", method:"2027.10/12–15 Prometric · 등록 마감 9/14 11:59 PM · SRM credit 필수 · 하루 시험 · 일정 변경 불가", when:"Fall Y2 · 10월", order:11 },
       { id:"sas-cert", cat:"career", name:"SAS Base Certification", method:"2026-08-23 합격 · Base Programming Specialist", when:"완료", order:19 },
       { id:"sas-hackathon", cat:"career", name:"SAS Student Hackathon", method:"10/1 시작 · 10/30 마감 · 신청 완료 · Health rate memo와 동일 스택", when:"Fall Y1 · 10/1–10/30", order:20 },
       { id:"sas-advanced", cat:"career", name:"SAS Advanced Programming (선택)", method:"Base 이후 · 인턴/실무에서 SAS 쓸 때 검토", when:"겨울방학 (선택)", order:28 },
@@ -467,15 +468,15 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       { id:"vee-acct", cat:"vee", name:"VEE Accounting & Finance", method:"이미 통과", when:"완료", order:4 },
       { id:"as-5102-5104", cat:"uec", name:"Exam FAM", method:"AS 5102 & 5104 UEC", when:"2학기", order:7 },
       { id:"as-5108", cat:"uec", name:"Exam SRM", method:"AS 5108(Fall) + AS 5118(Spring) UEC · 둘 다 필요", when:"Fall Y1 → Spring Y1", order:6 },
-      { id:"as-5114", cat:"uec", name:"Exam ASTAM", method:"AS 5114 Advanced Long Term Modeling UEC", when:"3학기", order:10 },
-      { id:"paf", cat:"module", name:"PAF Module", method:"e-Learning · P(1월) + 5101 FM credit 후", when:"Spring 후반", order:6 },
-      { id:"asf", cat:"module", name:"ASF Module", method:"e-Learning · PAF+FAM+SRM credit 후", when:"2027 여름", order:8 },
-      { id:"fap-12", cat:"module", name:"FAP 1-2", method:"e-Learning · PAF 직후", when:"Spring 초", order:12 },
-      { id:"fap-34", cat:"module", name:"FAP 3-4", method:"e-Learning", when:"Spring~여름", order:13 },
-      { id:"fap-5", cat:"module", name:"FAP 5", method:"e-Learning", when:"여름~Fall Y2", order:14 },
-      { id:"fap-final", cat:"module", name:"FAP 최종 평가", method:"e-Learning · 모듈 완료 후", when:"Fall Y2", order:15 },
-      { id:"atpa", cat:"module", name:"ATPA Assessment", method:"SOA", when:"여름", order:9 },
-      { id:"apc", cat:"module", name:"APC", method:"Professionalism · 나머지 요건 전부 후 초대", when:"2028년 1–3월", order:16 },
+      { id:"as-5114", cat:"uec", name:"Exam ALTAM", method:"AS 5114 Advanced Long Term Modeling UEC · 2027.12 · SOA 시험 안 침", when:"Fall Y2 · 12월", order:10 },
+      { id:"paf", cat:"module", name:"PAF Module", method:"e-Learning 수시 · P+FM credit 후 · 2027 여름 초 · ASF와 동시 불가", when:"2027 여름 초", order:6 },
+      { id:"asf", cat:"module", name:"ASF Module", method:"e-Learning 수시 · PAF+SRM+FAM credit 후 · PAF와 순차", when:"2027 여름", order:8 },
+      { id:"fap-12", cat:"module", name:"FAP 1-2", method:"e-Learning · PA 이후 시작 · 등록 조건 없음 · 24개월", when:"PA 이후", order:12 },
+      { id:"fap-34", cat:"module", name:"FAP 3-4", method:"e-Learning · EMA 수시", when:"PA 이후", order:13 },
+      { id:"fap-5", cat:"module", name:"FAP 5", method:"e-Learning · Final 전", when:"PA 이후", order:14 },
+      { id:"fap-final", cat:"module", name:"FAP Final Assessment", method:"연 3회 윈도우 · 목표 FA 2028-02 (2/1–5/31) · 놓치면 밀림", when:"2028 봄", order:15 },
+      { id:"atpa", cat:"module", name:"ATPA Assessment", method:"연 3회 · 목표 2028 Feb–Apr · APC 전", when:"2028 · 2–4월", order:9 },
+      { id:"apc", cat:"module", name:"APC", method:"맨 마지막 · 나머지 요건 전부 후 초대", when:"2028", order:16 },
       { id:"shi-research", cat:"career", name:"Health policy research track", method:"Dr. Mullachery · Dr. Hollin · PhD Health Policy / Health Econ·Services 타깃", when:"Fall Y1+", order:20 },
       { id:"oncampus-job", cat:"career", name:"온캠퍼스 잡", method:"입학 즉시 지원", when:"1학기", order:21 },
       { id:"intern-fall", cat:"career", name:"가을 인턴 지원", method:"계리사 인턴 채용", when:"1학기", order:22 },
@@ -483,12 +484,12 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       { id:"cpt-pt", cat:"career", name:"CPT 파트타임", method:"2학기 인턴", when:"2학기", order:24 },
       { id:"cpt-ft", cat:"career", name:"CPT 풀타임", method:"여름 인턴", when:"여름", order:25 },
       { id:"graduate", cat:"career", name:"졸업", method:"Temple MS 완료", when:"2027.12", order:26 },
-      { id:"asa", cat:"career", name:"ASA 완성", method:"모든 요건 + APC", when:"2028년 1–3월", order:27 },
+      { id:"asa", cat:"career", name:"ASA 완성", method:"모든 요건 + APC", when:"2028", order:27 },
       { id:"soa-join", cat:"admin", name:"SOA Candidate 등록", method:"soa.org 가입", when:"P 전후", order:30 },
       { id:"resume-update", cat:"admin", name:"Resume 첨삭 · SAS Base 반영", method:"Fox Career/GCS · SAS Base Programming Specialist(2026-08-23 합격) · Skills·Certifications · LinkedIn 동기화", when:"입학 직후", order:29 },
       { id:"p-transcript", cat:"admin", name:"P 합격 transcript", method:"SOA에 성적 제출", when:"합격 후", order:33 },
       { id:"vee-submit", cat:"admin", name:"VEE 학점 SOA 제출", method:"Econ(Micro)+Acct 완료 후 Candidate Central · Macro transcript 포함", when:"완료 시", order:34 },
-      { id:"uec-grade", cat:"admin", name:"UEC 성적 요건 확인", method:"Temple AS과목 B 이상 등", when:"수강 전", order:35 },
+      { id:"uec-grade", cat:"admin", name:"UEC 바로 신청", method:"봄 성적 나오자마자 SRM·FAM·FM · PA 등록 전 SRM credit", when:"2027 봄 종강 직후", order:35 },
       { id:"cpt-paperwork", cat:"admin", name:"CPT 서류", method:"국제학생실 + 고용주", when:"인턴 전", order:36 },
       { id:"pa-transcript", cat:"admin", name:"PA 합격 transcript", method:"SOA에 성적 제출", when:"합격 후", order:37 }
     ];
@@ -503,13 +504,18 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       { date:"2026-12-15", label:"Fall 2026 종강 (기말 종료)" },
       { date:"2027-01-11", label:"Spring 2027 개강" },
       { date:"2027-01-25", label:"Exam P (1/14–25)", taskId:"exam-p-sit" },
-      { date:"2027-09-14", label:"Exam PA 등록 마감", taskId:"exam-pa" },
-      { date:"2027-10-12", label:"Exam PA (10/12–15)", taskId:"exam-pa" },
-      { date:"2027-05-04", label:"Spring 2027 종강 (기말 종료)" },
-      { date:"2027-06-01", label:"CPT FT", taskId:"cpt-ft" },
+      { date:"2027-05-04", label:"Spring 2027 종강 · UEC 바로 신청", taskId:"uec-apply" },
+      { date:"2027-06-01", label:"PAF 시작 (P+FM credit)", taskId:"paf" },
+      { date:"2027-07-01", label:"ASF (PAF 끝난 뒤)", taskId:"asf" },
+      { date:"2027-06-01", label:"Exam PA 집중 공부", taskId:"prep-pa" },
       { date:"2027-08-24", label:"Fall 2027 개강 (잠정)" },
-      { date:"2027-12-15", label:"Fall 2027 종강 · 졸업 (잠정)", taskId:"graduate" },
-      { date:"2028-03-01", label:"ASA (목표)", taskId:"asa" }
+      { date:"2027-09-14", label:"Exam PA 등록 마감", taskId:"exam-pa" },
+      { date:"2027-10-12", label:"Exam PA (10/12–15 · Prometric)", taskId:"exam-pa" },
+      { date:"2027-11-01", label:"FAP 시작 (PA 이후)", taskId:"fap-12" },
+      { date:"2027-12-15", label:"ALTAM UEC · 졸업 (잠정)", taskId:"as-5114" },
+      { date:"2028-02-01", label:"FAP Final (FA 2028-02 · 잠정)", taskId:"fap-final" },
+      { date:"2028-02-01", label:"ATPA Feb–Apr 윈도우", taskId:"atpa" },
+      { date:"2028-06-01", label:"APC · ASA (목표)", taskId:"apc" }
     ];
 
     const MILESTONES = DDAYS;
@@ -545,7 +551,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
         { name: "ATPA Assessment", fee: 1255 },
         { name: "APC (Virtual)", fee: 658 }
       ],
-      uecNote: "FAM·SRM·ASTAM·FM → Temple UEC · FM은 AS 5101 Spring 수업 · P는 SOA 1월 말"
+      uecNote: "FAM·SRM·ALTAM·FM → Temple UEC · P만 SOA 시험 · 성적 나오면 UEC 바로 신청"
     };
 
     const STUDY_PROVIDERS = [
@@ -622,7 +628,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
         pick: "5102 Long-Term · 5118 Advanced Analytics · 5101 FM · RMI 5051",
         cost: "학비 포함",
         costDetail: "FM은 SOA 시험 대신 5101 · RMI 5051 required",
-        plan: "P 끝난 뒤 수업 네 과목. 5101로 FM UEC · 5102로 FAM 완성 · 5118로 SRM 완성.",
+        plan: "P는 SOA 시험. 봄에 SRM·FAM·FM 수업 → 성적 나오자마자 UEC 신청 (PA 등록에 SRM credit).",
         links: [
           { text: "Temple AS", url: "https://bulletin.temple.edu/" }
         ],
@@ -631,29 +637,30 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       {
         when: "2027 · Exam PA (10/12–15)",
         tier: "later", tierLabel: "Fall 2027",
-        pick: "AS 5108+5118(SRM) 완료 후 · CA PA + Mahler",
+        pick: "SRM UEC 후 · CA PA + Mahler · 100–150h",
         cost: "~$500+",
-        costDetail: "등록 마감 9/14 11:59 PM · window 10/12–15 · 성적 ~11월 말",
-        plan: "Spring 5118까지 SRM UEC → 여름~Fall PA 집중 (~500h) → 10/12–15 응시 · APC는 PA 성적 후 2028 초",
+        costDetail: "등록 마감 9/14 11:59 PM · Prometric 10/12–15 · 일정 변경 불가",
+        plan: "봄 UEC 신청 → 여름 PAF → ASF(PAF 후) + PA 100–150h → 10월 PA. APC는 맨 마지막.",
         links: [
           { text: "CA PA", url: "https://www.coachingactuaries.com/exam-pa/pricing" },
           { text: "Mahler PA", url: "https://www.theinfiniteactuary.com/mahler/" },
           { text: "SOA PA", url: "https://www.soa.org/education/exam-req/edu-exam-pa-detail/" }
         ],
-        alt: "4월 PA는 5118 병행이라 비추 · 10월이 SRM 직후 여유"
+        alt: "4월 PA는 SRM UEC 타이밍상 비추"
       },
       {
-        when: "학기별 · 모듈",
+        when: "모듈 · 윈도우",
         tier: "later", tierLabel: "SOA",
-        pick: "PAF → FAP → ASF → Final (SOA e-Learning)",
+        pick: "PAF → ASF (순차) · FAP는 PA 이후 · ATPA 2028 2–4월 · APC 마지막",
         cost: "SOA 요금 포함",
-        costDetail: "별도 교재 거의 없음",
-        plan: "Spring 초 PAF → FAP 1–5 · 2027 여름 ASF(FAM+SRM 후) · Fall PA(10월)+FAP Final · 졸업 후 APC → 2028년 1–3월 ASA",
+        costDetail: "PAF/ASF는 수시 e-Learning · FAP Final·ATPA는 연 3회 윈도우",
+        plan: "여름 초 PAF(P+FM) → ASF(PAF+SRM+FAM) · PA 이후 FAP 24개월 · FA 2028-02 · ATPA Feb–Apr 2028 · APC",
         links: [
-          { text: "SOA FAP", url: "https://www.soa.org/education/exam-req/edu-module-fap-detail/" },
-          { text: "My SOA (login)", url: "https://engage.soa.org/login" }
+          { text: "SOA Exam Schedule", url: "https://www.soa.org/education/exam-schedule/" },
+          { text: "FAP Final 일정", url: "https://www.soa.org/education/general-info/fap-schedule/" },
+          { text: "ATPA 일정", url: "https://www.soa.org/education/exam-req/exam-day-info/atpa-submission-schedule/" }
         ],
-        alt: null
+        alt: "PAF와 ASF는 동시에 못 함"
       }
     ];
 
@@ -663,8 +670,13 @@ const STORAGE_KEY = "soa-asa-plan-v6";
     }
 
     const EXAM_DEADLINES = [
-      { exam:"Exam P (2027.1 · 1월 말)", examDate:"2027-01-14", examEnd:"2027-01-25", regDeadline:"2026-12-15", note:"목표 window 1/14–25 · 등록 마감 12/15 · TIA P" },
-      { exam:"Exam PA (2027.10)", examDate:"2027-10-12", examEnd:"2027-10-15", regDeadline:"2027-09-14", note:"Sitting 10/12–15 · 등록 마감 9/14 11:59 PM · SRM 완료 후 · 성적 ~11월 말 · APC는 그 다음" }
+      { exam:"Exam P (2027.1)", examDate:"2027-01-14", examEnd:"2027-01-25", regDeadline:"2026-12-15", note:"CBT 1/14–25 · 등록 마감 12/15 11:59 PM · SOA Exam Schedule" },
+      { exam:"Exam PA (2027.10)", examDate:"2027-10-12", examEnd:"2027-10-15", regDeadline:"2027-09-14", note:"Prometric 하루 · 10/12–15 · 등록 9/14 11:59 PM · SRM credit 필수 · 일정 변경 불가" },
+      { exam:"PAF Module", examDate:"2027-06-01", examEnd:"2027-08-31", anytime:true, note:"e-Learning 수시 · 12개월 액세스 · P+FM credit 후 · 여름 초 시작 · ASF와 동시 불가" },
+      { exam:"ASF Module", examDate:"2027-07-01", examEnd:"2027-09-30", anytime:true, note:"e-Learning 수시 · PAF+SRM+FAM credit 후 · PAF와 순차 · PA 공부와 병행" },
+      { exam:"FAP Final (FA 2027-10)", examDate:"2027-10-01", examEnd:"2028-01-31", anytime:true, note:"공식: 다운로드 10/1 · 제출 1/31/28 · 성적 3월 중순 · PA 직후면 타이트" },
+      { exam:"FAP Final (목표 FA 2028-02)", examDate:"2028-02-01", examEnd:"2028-05-31", anytime:true, note:"연 3회 패턴 잠정 (SOA 미게시) · PA 이후 FAP에 여유 있는 윈도우" },
+      { exam:"ATPA (목표 2028 Feb–Apr)", examDate:"2028-02-01", examEnd:"2028-04-30", anytime:true, note:"연 3회 · SOA는 2026 윈도우만 게시 · 패턴 2–4 / 6–8 / 10–12월 · APC 전" }
     ];
 
     const CONTACTS = [
@@ -681,9 +693,9 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       { exam:"Exam P", min:150, max:350, typical:200, plan:"1/14–25 · TIA P", tips:"지금 1순위 · 등록 12/15 · 1월 말 window" },
       { exam:"SAS Base Certification", min:40, max:80, typical:60, plan:"2026-08-23 합격 ✓", tips:"완료 · 이력서·LinkedIn 반영 · Advanced는 겨울방학 선택", done:true },
       { exam:"Exam FM", min:0, max:0, typical:0, plan:"AS 5101 수업 (Spring)", tips:"SOA 시험 안 침 · Theory of Interest · 봄 네 과목 중 하나" },
-      { exam:"Exam PA", min:400, max:600, typical:500, plan:"10/12–15 · 등록 9/14", tips:"500h · 여름~Fall · SRM(5108+5118) 끝난 뒤" },
-      { exam:"UEC (FAM/SRM/ASTAM)", min:0, max:0, typical:0, plan:"Temple 수업", tips:"FM=SOA 시험 · FAM=5102+5104 · SRM=5108+5118 · ASTAM=5114 Advanced Long Term · B- 이상" },
-      { exam:"PAF / ASF / FAP", min:20, max:40, typical:30, plan:"Spring 초 PAF → FAP · 2027 여름 ASF", tips:"모듈당 대략 20–40시간. ASF는 FAM+SRM credit 후 · ASA 목표는 2028년 1–3월." }
+      { exam:"Exam PA", min:100, max:150, typical:125, plan:"10/12–15 · 등록 9/14", tips:"100–150h · 여름~10월 · SRM UEC 후 · Prometric 일정 변경 불가" },
+      { exam:"UEC (FAM/SRM/ALTAM/FM)", min:0, max:0, typical:0, plan:"Temple 수업", tips:"P만 SOA 시험 · FAM=5102+5104 · SRM=5108+5118 · FM=5101 · ALTAM=5114 · 성적 나오면 바로 신청" },
+      { exam:"PAF / ASF / FAP", min:20, max:40, typical:30, plan:"여름 초 PAF → ASF · FAP는 PA 이후", tips:"PAF와 ASF는 순차. FAP 등록 조건 없음 · 24개월. Final·ATPA는 연 3회 윈도우." }
     ];
 
     // 포폴용 개인 프로젝트 (SOA · Life/Health · 서부 스폰 회사 면접용)
@@ -976,7 +988,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
             name: "Plan A — SOA Health Track",
             goal: "Health actuarial path · exams/UEC · CPT/OPT → H-1B → employer GC",
             steps: [
-              "Exams/UEC: P · FM · SRM(5108+5118) · PA · FAM/ASTAM via Temple",
+              "Exams/UEC: P · FM · SRM(5108+5118) · PA · FAM/ALTAM via Temple",
               "Skills: SAS + Health portfolio · Research does not replace Plan A deliverables",
               "Internships: Health-focused CPT PT → summer CPT FT (Milliman, health plans, consulting Health)",
               "Post-grad: STEM OPT if eligible · H-1B at sponsorship-aware Health employers",

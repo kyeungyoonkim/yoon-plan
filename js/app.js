@@ -1017,13 +1017,14 @@ let state;
           const window = d.examEnd ? `${d.examDate.slice(5)} ~ ${d.examEnd.slice(5)}` : d.examDate;
           let regLabel = "—";
           let cls = "";
-          if (d.regDeadline) {
+          if (d.anytime) {
+            regLabel = "수시";
+          } else if (d.regDeadline) {
             const regDays = daysUntil(d.regDeadline);
             cls = regDays < 0 ? "deadline-passed" : regDays <= 21 ? "deadline-soon" : "";
             regLabel = regDays < 0 ? "지남" : regDays <= 30 ? fmtDday(regDays) + " · " + d.regDeadline : d.regDeadline;
           } else {
-            regLabel = "Closed";
-            cls = "deadline-passed";
+            regLabel = "—";
           }
           return `<tr class="${cls}"><td><strong>${d.exam}</strong></td><td>${window}</td><td>${regLabel}</td><td style="color:var(--muted);font-size:0.78rem">${d.note}</td></tr>`;
         }).join("") + "</tbody>";
@@ -1089,7 +1090,7 @@ let state;
       const cats = [
         { label:"시험 (P·FM·PA)", ids: EXAM_IDS, cls:"cat-exam" },
         { label:"VEE", ids: VEE_IDS, cls:"cat-vee" },
-        { label:"UEC (FAM·SRM·ASTAM)", ids: UEC_IDS, cls:"cat-uec" },
+        { label:"UEC (FAM·SRM·ALTAM)", ids: UEC_IDS, cls:"cat-uec" },
         { label:"모듈 & FAP", ids: MOD_IDS, cls:"cat-module" },
         { label:"커리어", ids: CAREER_IDS, cls:"cat-career" }
       ];
@@ -2246,7 +2247,7 @@ let state;
         el.innerHTML = `<div><span class="hours-big">재응시</span> <span class="stat-sub">Exam PA 불합격 · SRM(5108+5118) 기반 복습</span></div>
         <p class="stat-sub" style="margin-top:0.5rem">predictive modeling · R/Python 연습 강화 후 재응시.</p>`;
       } else if (getExamStatus("exam-pa") !== "passed") {
-        el.innerHTML = `<div><span class="hours-big">500h</span> <span class="stat-sub">Exam PA · <strong>10/12–15</strong> (등록 마감 9/14 · SRM 완료 후)</span></div>`;
+        el.innerHTML = `<div><span class="hours-big">100–150h</span> <span class="stat-sub">Exam PA · <strong>10/12–15</strong> Prometric (등록 9/14 · SRM credit)</span></div>`;
       } else {
         el.innerHTML = `<p class="stat-sub">SOA 시험(P·FM·PA) 완료. UEC·모듈·FAP에 집중. <span style="cursor:pointer;color:var(--accent)" onclick="switchTab('guide')">Temple 학위 요건 →</span></p>`;
       }
