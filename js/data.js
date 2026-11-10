@@ -437,6 +437,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       { id:"sem3", name:"3학기 (Fall Y2)", period:"2027년 8/24 ~ 12/15", start:"2027-08-24", end:"2027-12-15", tasks:[
         { id:"exam-pa-reg", text:"Exam PA 등록", meta:"마감 9/14 11:59 PM · SRM credit 필수 · 일정 변경 불가", highlight:true },
         { id:"exam-pa", text:"Exam PA (10/12–15)", meta:"Prometric 하루 · CBT · 등록 9/14", highlight:true },
+        { id:"atpa", text:"ATPA Fall 2027 (PA 직후 등록)", meta:"등록 8/1–11/30 · 평가 early Oct · 제출 12/31 · 성적 ~2028.2 말", highlight:true },
         { id:"as-5114", text:"AS 5114 Advanced Long Term Modeling → ALTAM UEC", meta:"2027.12 · SOA ALTAM 시험 안 침", highlight:true },
         { id:"hcm-5101", text:"Elective (3 cr)", meta:"이후 수강 · Advisor 확인", highlight:true },
         { id:"elective-2", text:"Elective 2 (추가 1과목)", meta:"Elective 2/2 · Fall 2027" },
@@ -447,8 +448,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
         { id:"fap-34", text:"FAP 모듈 진행", meta:"EMA 수시 제출", highlight:true },
         { id:"fap-5", text:"FAP 모듈 마무리", meta:"Final 전", highlight:true },
         { id:"fap-final", text:"FAP Final Assessment", meta:"목표 FA 2028-02 (2/1–5/31) · 연 3회 · 놓치면 밀림", highlight:true },
-        { id:"atpa", text:"ATPA (2028 · 2–4월 윈도우)", meta:"연 3회 · 목표 Feb–Apr 2028 · APC 전", highlight:true },
-        { id:"apc", text:"APC (맨 마지막)", meta:"PA·ALTAM·FAP Final·ATPA 등 전부 후 초대", highlight:true },
+        { id:"apc", text:"APC (맨 마지막)", meta:"ATPA 성적(~2028.2 말)·ALTAM·FAP Final 후 초대", highlight:true },
         { id:"asa", text:"ASA 완성", meta:"APC 후 · 2028", highlight:true },
         { id:"sas-clinical", text:"SAS Clinical (선택)", meta:"제약·임상 진로 시" }
       ]}
@@ -475,7 +475,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       { id:"fap-34", cat:"module", name:"FAP 3-4", method:"e-Learning · EMA 수시", when:"PA 이후", order:13 },
       { id:"fap-5", cat:"module", name:"FAP 5", method:"e-Learning · Final 전", when:"PA 이후", order:14 },
       { id:"fap-final", cat:"module", name:"FAP Final Assessment", method:"연 3회 윈도우 · 목표 FA 2028-02 (2/1–5/31) · 놓치면 밀림", when:"2028 봄", order:15 },
-      { id:"atpa", cat:"module", name:"ATPA Assessment", method:"연 3회 · 목표 2028 Feb–Apr · APC 전", when:"2028 · 2–4월", order:9 },
+      { id:"atpa", cat:"module", name:"ATPA Assessment", method:"PA 직후 Fall 2027 윈도우 · 등록 8/1–11/30 · 제출 12/31 · 성적 late Feb 2028", when:"2027 Fall · PA 직후", order:9 },
       { id:"apc", cat:"module", name:"APC", method:"맨 마지막 · 나머지 요건 전부 후 초대", when:"2028", order:16 },
       { id:"shi-research", cat:"career", name:"Health policy research track", method:"Dr. Mullachery · Dr. Hollin · PhD Health Policy / Health Econ·Services 타깃", when:"Fall Y1+", order:20 },
       { id:"oncampus-job", cat:"career", name:"온캠퍼스 잡", method:"입학 즉시 지원", when:"1학기", order:21 },
@@ -511,10 +511,13 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       { date:"2027-08-24", label:"Fall 2027 개강 (잠정)" },
       { date:"2027-09-14", label:"Exam PA 등록 마감", taskId:"exam-pa" },
       { date:"2027-10-12", label:"Exam PA (10/12–15 · Prometric)", taskId:"exam-pa" },
+      { date:"2027-10-16", label:"ATPA Fall 등록 (PA 직후)", taskId:"atpa" },
       { date:"2027-11-01", label:"FAP 시작 (PA 이후)", taskId:"fap-12" },
+      { date:"2027-11-30", label:"ATPA 등록 마감", taskId:"atpa" },
       { date:"2027-12-15", label:"ALTAM UEC · 졸업 (잠정)", taskId:"as-5114" },
+      { date:"2027-12-31", label:"ATPA 제출 마감", taskId:"atpa" },
       { date:"2028-02-01", label:"FAP Final (FA 2028-02 · 잠정)", taskId:"fap-final" },
-      { date:"2028-02-01", label:"ATPA Feb–Apr 윈도우", taskId:"atpa" },
+      { date:"2028-02-28", label:"ATPA 성적 (잠정)", taskId:"atpa" },
       { date:"2028-06-01", label:"APC · ASA (목표)", taskId:"apc" }
     ];
 
@@ -651,10 +654,10 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       {
         when: "모듈 · 윈도우",
         tier: "later", tierLabel: "SOA",
-        pick: "PAF → ASF (순차) · FAP는 PA 이후 · ATPA 2028 2–4월 · APC 마지막",
+        pick: "PAF → ASF (순차) · FAP는 PA 이후 · ATPA는 PA 직후 Fall 2027 · APC 마지막",
         cost: "SOA 요금 포함",
         costDetail: "PAF/ASF는 수시 e-Learning · FAP Final·ATPA는 연 3회 윈도우",
-        plan: "여름 초 PAF(P+FM) → ASF(PAF+SRM+FAM) · PA 이후 FAP 24개월 · FA 2028-02 · ATPA Feb–Apr 2028 · APC",
+        plan: "여름 초 PAF → ASF · 10월 PA → 바로 ATPA Fall 등록(제출 12/31) · FAP · APC",
         links: [
           { text: "SOA Exam Schedule", url: "https://www.soa.org/education/exam-schedule/" },
           { text: "FAP Final 일정", url: "https://www.soa.org/education/general-info/fap-schedule/" },
@@ -676,7 +679,9 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       { exam:"ASF Module", examDate:"2027-07-01", examEnd:"2027-09-30", anytime:true, note:"e-Learning 수시 · PAF+SRM+FAM credit 후 · PAF와 순차 · PA 공부와 병행" },
       { exam:"FAP Final (FA 2027-10)", examDate:"2027-10-01", examEnd:"2028-01-31", anytime:true, note:"공식: 다운로드 10/1 · 제출 1/31/28 · 성적 3월 중순 · PA 직후면 타이트" },
       { exam:"FAP Final (목표 FA 2028-02)", examDate:"2028-02-01", examEnd:"2028-05-31", anytime:true, note:"연 3회 패턴 잠정 (SOA 미게시) · PA 이후 FAP에 여유 있는 윈도우" },
-      { exam:"ATPA (목표 2028 Feb–Apr)", examDate:"2028-02-01", examEnd:"2028-04-30", anytime:true, note:"연 3회 · SOA는 2026 윈도우만 게시 · 패턴 2–4 / 6–8 / 10–12월 · APC 전" }
+      { exam:"ATPA Winter 2027 (참고)", examDate:"2027-02-01", examEnd:"2027-04-30", regDeadline:"2027-03-31", note:"등록 12/1/26–3/31 · 평가 early Feb · 제출 4/30 · 성적 late Jun · 이번 플랜 아님" },
+      { exam:"ATPA Summer 2027 (참고)", examDate:"2027-06-01", examEnd:"2027-08-31", regDeadline:"2027-07-31", note:"등록 4/1–7/31 · 평가 early Jun · 제출 8/31 · 성적 late Oct · 이번 플랜 아님" },
+      { exam:"ATPA Fall 2027 (예약)", examDate:"2027-10-01", examEnd:"2027-12-31", regDeadline:"2027-11-30", note:"PA 직후 등록 · 등록 8/1–11/30 · 평가 early Oct · 제출 12/31 · 성적 late Feb 2028" }
     ];
 
     const CONTACTS = [
@@ -695,7 +700,7 @@ const STORAGE_KEY = "soa-asa-plan-v6";
       { exam:"Exam FM", min:0, max:0, typical:0, plan:"AS 5101 수업 (Spring)", tips:"SOA 시험 안 침 · Theory of Interest · 봄 네 과목 중 하나" },
       { exam:"Exam PA", min:100, max:150, typical:125, plan:"10/12–15 · 등록 9/14", tips:"100–150h · 여름~10월 · SRM UEC 후 · Prometric 일정 변경 불가" },
       { exam:"UEC (FAM/SRM/ALTAM/FM)", min:0, max:0, typical:0, plan:"Temple 수업", tips:"P만 SOA 시험 · FAM=5102+5104 · SRM=5108+5118 · FM=5101 · ALTAM=5114 · 성적 나오면 바로 신청" },
-      { exam:"PAF / ASF / FAP", min:20, max:40, typical:30, plan:"여름 초 PAF → ASF · FAP는 PA 이후", tips:"PAF와 ASF는 순차. FAP 등록 조건 없음 · 24개월. Final·ATPA는 연 3회 윈도우." }
+      { exam:"PAF / ASF / FAP", min:20, max:40, typical:30, plan:"여름 초 PAF → ASF · FAP는 PA 이후", tips:"PAF와 ASF는 순차. FAP 24개월. ATPA는 PA 직후 Fall 2027 (제출 12/31)." }
     ];
 
     // 포폴용 개인 프로젝트 (SOA · Life/Health · 서부 스폰 회사 면접용)
