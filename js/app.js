@@ -1473,9 +1473,49 @@ let state;
       return `이번 주 에너지 ${faces}${sleepBit}`;
     }
 
+    function checkinEntryDate() {
+      return studyEntryDay === "yesterday" ? yesterdayIso() : localDateStr();
+    }
+
+    function checkinSummary(cin) {
+      if (!cin) return "";
+      const bits = [];
+      if (+cin.energy === 1) bits.push("😫 힘듦");
+      else if (+cin.energy === 2) bits.push("😐 보통");
+      else if (+cin.energy === 3) bits.push("🙂 좋음");
+      if (cin.sleep === 0 || cin.sleep) bits.push("수면 " + cin.sleep + "h");
+      if (cin.memo) bits.push(cin.memo);
+      return bits.join(" · ");
+    }
+
+    function saveCheckinFromForm() {
+      const sleepEl = document.getElementById("checkinSleep");
+      const memoEl = document.getElementById("checkinMemo");
+      const activeE = document.querySelector("[data-energy].active");
+      const energy = activeE ? +activeE.dataset.energy : 0;
+      const sleepRaw = sleepEl ? sleepEl.value.trim() : "";
+      const sleep = sleepRaw === "" ? "" : Math.max(0, Math.min(14, +sleepRaw));
+      const memo = memoEl ? memoEl.value.trim() : "";
+      if (!energy && sleep === "" && !memo) {
+        toast("에너지, 수면, 또는 메모 중 하나만 있으면 돼요");
+        return;
+      }
+      const patch = {};
+      if (energy) patch.energy = energy;
+      if (sleep !== "") patch.sleep = sleep;
+      if (memo) patch.memo = memo;
+      upsertCheckin(checkinEntryDate(), patch);
+      toast("컨디션 저장");
+    }
+
     function renderCheckin() {
-      const date = studyEntryDay === "yesterday" ? yesterdayIso() : localDateStr();
+      const date = checkinEntryDate();
       const cin = getCheckin(date) || {};
+      const tag = studyEntryDay === "yesterday" ? "어제" : "오늘";
+      const dayEl = document.getElementById("checkinDayLabel");
+      if (dayEl) dayEl.textContent = `${tag} · ${formatLogDate(date)}`;
+      const addBtn = document.getElementById("btnLogCheckin");
+      if (addBtn) addBtn.textContent = tag === "어제" ? "어제 컨디션 저장" : "오늘 컨디션 저장";
       document.querySelectorAll("[data-energy]").forEach(btn => {
         btn.classList.toggle("active", +btn.dataset.energy === +cin.energy);
       });
@@ -1485,6 +1525,11 @@ let state;
       }
       const memoEl = document.getElementById("checkinMemo");
       if (memoEl && document.activeElement !== memoEl) memoEl.value = cin.memo || "";
+      const note = document.getElementById("checkinSavedNote");
+      if (note) {
+        const sum = checkinSummary(getCheckin(date));
+        note.textContent = sum || "에너지 · 수면 · 메모 중 하나만 있어도 저장돼요";
+      }
       renderEnergyWeekChart();
     }
 
@@ -1536,6 +1581,8 @@ let state;
           upsertCheckin(date, { memo: memoEl.value.trim() });
         };
       }
+      const saveBtn = document.getElementById("btnLogCheckin");
+      if (saveBtn) saveBtn.onclick = () => saveCheckinFromForm();
     }
 
     function isExamPStudyLog(log) {
