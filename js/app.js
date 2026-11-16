@@ -29,7 +29,7 @@ let state;
       return {
         reqChecked:{}, timelineChecked:{}, templeChecked:{}, examStatus:{}, projectChecked:{}, researchChecked:{},
         weeklyMemo:"", adminMemo:"",
-        studyLogs:[], checklistFilter:"all", schedule:[],
+        studyLogs:[], checkins:[], checklistFilter:"all", schedule:[],
         weeklyStudyGoal: DEFAULT_WEEKLY_STUDY_GOAL, studyGoalVersion: STUDY_GOAL_VERSION,
         weeklyExamPGoal: DEFAULT_WEEKLY_EXAM_P_GOAL, examPTotalGoal: EXAM_P_TOTAL_GOAL,
         weeklyTodoWeek: "", weeklyTodoChecked: {},
@@ -914,13 +914,32 @@ let state;
       document.getElementById(id + "Txt").textContent = txt;
     }
 
+    const MOTIVATE_POOL = [
+      "꾸준함이 속도를 이긴다",
+      "오늘 걷지 않으면 내일 뛰어야 한다",
+      "한 블록만 해도 오늘은 이긴 거예요",
+      "천천히, 빠지지 않게",
+      "오늘은 완성보다 시작",
+      "쉬어도 계획은 살아 있어요",
+      "작은 기록이 큰 패턴이 돼요"
+    ];
+
     function getMotivate(pct, remaining) {
       if (pct >= 100) return "ASA 완성! 정말 수고했어.";
+      const today = localDateStr();
+      const pomoN = (state && state.pomodoro && state.pomodoro.lastDate === today)
+        ? (state.pomodoro.todayCount || 0)
+        : 0;
+      if (pomoN === 1) return "오늘 한 뽀모도 진행이에요";
+      if (pomoN >= 2) return `오늘 ${pomoN}뽀모 진행이에요`;
+      const cin = getCheckin(today);
+      if (cin && cin.energy === 1) return "오늘은 무리하지 않아도 돼요";
       if (pct >= 80) return "거의 다 왔어! 마지막 스퍼트만.";
       if (pct >= 50) return "절반 넘었어. 이 속도면 충분해.";
-      if (pct >= 25) return "기반이 쌓이고 있어. 꾸준히 가자.";
       if (remaining <= 5) return "시작이 반이야. P가 1순위!";
-      return "오늘 걷지 않으면 내일 뛰어야 한다";
+      const seed = parseInt(today.replace(/-/g, ""), 10) + (pct || 0);
+      if ((!cin || !cin.energy) && seed % 3 === 0) return "오늘 체크인 5초면 돼요";
+      return MOTIVATE_POOL[Math.abs(seed) % MOTIVATE_POOL.length];
     }
 
     function getJourneyPct() {
@@ -933,6 +952,128 @@ let state;
     function getWeekStudyMinutes() {
       const weekStart = getWeekStart();
       return (state.studyLogs || []).filter(l => parseLocalDate(l.date) >= weekStart).reduce((s, l) => s + (+l.minutes || 0), 0);
+    }
+
+    function studyMinutesOnDate(iso) {
+      return (state.studyLogs || []).filter(l => l.date === iso).reduce((s, l) => s + (+l.minutes || 0), 0);
+    }
+
+    function getCheckin(iso) {
+      return (state.checkins || []).find(c => c.date === iso) || null;
+    }
+
+    function upsertCheckin(iso, patch) {
+      if (!state.checkins) state.checkins = [];
+      const i = state.checkins.findIndex(c => c.date === iso);
+      const prev = i >= 0 ? state.checkins[i] : { date: iso, energy: 0, sleep: "", memo: "" };
+      const next = { ...prev, date: iso, ...patch };
+      if (i >= 0) state.checkins[i] = next;
+      else state.checkins.push(next);
+      saveState(true);
+    }
+
+    function getWeekDayRows() {
+      const weekStart = getWeekStart();
+      const labels = ["월", "화", "수", "목", "금", "토", "일"];
+      return labels.map((label, i) => {
+        const d = new Date(weekStart);
+        d.setDate(d.getDate() + i);
+        const ds = localDateStr(d);
+        const cin = getCheckin(ds);
+        return {
+          label,
+          date: ds,
+          minutes: studyMinutesOnDate(ds),
+          energy: cin && cin.energy ? +cin.energy : 0,
+          sleep: cin && cin.sleep !== "" && cin.sleep != null ? +cin.sleep : null
+        };
+      });
+    }
+
+    function getEnergyWeekInsight(rows) {
+      const withE = rows.filter(r => r.energy);
+      if (!withE.length) return "에너지를 누르면 주간 패턴이 쌓여요";
+      let push = 0, crashAfter = 0;
+      rows.forEach(r => {
+        if (r.minutes >= 180 && r.energy >= 2) push += 1;
+        else {
+          if (r.energy === 1 && push >= 2) crashAfter = Math.max(crashAfter, push);
+          push = r.minutes >= 180 ? push : 0;
+        }
+      });
+      if (crashAfter >= 2) return `${crashAfter}일 몰아붙인 뒤 에너지가 내려갔어요`;
+      const avg = withE.reduce((s, r) => s + r.energy, 0) / withE.length;
+      const faces = avg < 1.6 ? "😫" : avg < 2.5 ? "😐" : "🙂";
+      const sleepVals = rows.map(r => r.sleep).filter(s => s != null && Number.isFinite(s));
+      const sleepBit = sleepVals.length
+        ? ` · 수면 평균 ${ (sleepVals.reduce((a, b) => a + b, 0) / sleepVals.length).toFixed(1) }h`
+        : "";
+      return `이번 주 에너지 ${faces}${sleepBit}`;
+    }
+
+    function renderCheckin() {
+      const date = studyEntryDay === "yesterday" ? yesterdayIso() : localDateStr();
+      const cin = getCheckin(date) || {};
+      document.querySelectorAll("[data-energy]").forEach(btn => {
+        btn.classList.toggle("active", +btn.dataset.energy === +cin.energy);
+      });
+      const sleepEl = document.getElementById("checkinSleep");
+      if (sleepEl && document.activeElement !== sleepEl) {
+        sleepEl.value = cin.sleep === 0 || cin.sleep ? cin.sleep : "";
+      }
+      const memoEl = document.getElementById("checkinMemo");
+      if (memoEl && document.activeElement !== memoEl) memoEl.value = cin.memo || "";
+      renderEnergyWeekChart();
+    }
+
+    function renderEnergyWeekChart() {
+      const svg = document.getElementById("energyWeekChart");
+      const labelsEl = document.getElementById("energyWeekLabels");
+      const insightEl = document.getElementById("energyWeekInsight");
+      if (!svg) return;
+      const rows = getWeekDayRows();
+      const maxMin = Math.max(60, ...rows.map(r => r.minutes));
+      const w = 280, h = 92, pad = 8, gap = 8;
+      const colW = (w - pad * 2 - gap * 6) / 7;
+      const bars = rows.map((r, i) => {
+        const x = pad + i * (colW + gap);
+        const studyH = Math.round((r.minutes / maxMin) * 58);
+        const energyH = r.energy ? Math.round((r.energy / 3) * 58) : 0;
+        const studyY = h - 10 - studyH;
+        const energyY = h - 10 - energyH;
+        const eColor = r.energy === 1 ? "#c97b63" : r.energy === 3 ? "var(--accent)" : "var(--accent2)";
+        return `<rect x="${x}" y="${studyY}" width="${colW * 0.42}" height="${studyH}" rx="2" fill="var(--surface2)" stroke="var(--border)"/>
+          <rect x="${x + colW * 0.48}" y="${energyY}" width="${colW * 0.42}" height="${energyH}" rx="2" fill="${eColor}"/>`;
+      }).join("");
+      svg.innerHTML = `<line x1="${pad}" y1="${h - 10}" x2="${w - pad}" y2="${h - 10}" stroke="var(--border)"/>${bars}`;
+      if (labelsEl) labelsEl.innerHTML = rows.map(r => `<span>${r.label}</span>`).join("");
+      if (insightEl) insightEl.textContent = getEnergyWeekInsight(rows);
+    }
+
+    function bindCheckinTools() {
+      if (bindCheckinTools.done) return;
+      bindCheckinTools.done = true;
+      document.querySelectorAll("[data-energy]").forEach(btn => {
+        btn.onclick = () => {
+          const date = studyEntryDay === "yesterday" ? yesterdayIso() : localDateStr();
+          upsertCheckin(date, { energy: +btn.dataset.energy });
+        };
+      });
+      const sleepEl = document.getElementById("checkinSleep");
+      if (sleepEl) {
+        sleepEl.onchange = () => {
+          const date = studyEntryDay === "yesterday" ? yesterdayIso() : localDateStr();
+          const v = sleepEl.value === "" ? "" : Math.max(0, Math.min(14, +sleepEl.value));
+          upsertCheckin(date, { sleep: v });
+        };
+      }
+      const memoEl = document.getElementById("checkinMemo");
+      if (memoEl) {
+        memoEl.onchange = () => {
+          const date = studyEntryDay === "yesterday" ? yesterdayIso() : localDateStr();
+          upsertCheckin(date, { memo: memoEl.value.trim() });
+        };
+      }
     }
 
     function isExamPStudyLog(log) {
@@ -2699,6 +2840,8 @@ let state;
         : `<li><span style='color:var(--muted)'>${entryDay === "yesterday" ? "어제" : "오늘"} 기록 없음</span></li>`;
       const weekTotal = getWeekStudyMinutes();
       document.getElementById("weekStudyTotal").textContent = weekTotal;
+      bindCheckinTools();
+      renderCheckin();
       renderBudget();
     }
 
