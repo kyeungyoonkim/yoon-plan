@@ -1053,3 +1053,42 @@ const CAREER_COLUMNS = [
 const CAREER_CLOSED_STATUSES = ["rejected", "withdrawn"];
 const CAREER_TYPE_LABELS = { job:"온캠/PT", intern:"인턴", networking:"네트워킹·컨퍼" };
 const CAREER_ADVANCE = { target:"applied", applied:"interview", interview:"offer", networking:"applied" };
+
+const LIFE_TRACKS = [
+  { id:"asa", label:"ASA", hours:12, color:"var(--accent)" },
+  { id:"phd", label:"연구/박사", hours:8, color:"var(--purple)" },
+  { id:"job", label:"취업", hours:3, color:"var(--blue)" }
+];
+const MAX_ACTIVE_PROJECTS = 2;
+const DEFAULT_ACTIVE_PROJECTS = ["proj-health-rate-memo", "proj-life-term-memo"];
+
+const PHD_TIER_LABELS = { reach:"1순위·도전", match:"적정", safety:"안전" };
+const PHD_STATUS_LABELS = {
+  researching:"조사", contacting:"교수 연락", applying:"지원 작성",
+  submitted:"제출", waitlist:"웨이팅", accepted:"합격", rejected:"불합격"
+};
+const PHD_GRE_LABELS = { required:"필요", optional:"선택", waived:"면제", unknown:"확인 필요" };
+const PHD_REC_STATUSES = [
+  { id:"idle", label:"대기" },
+  { id:"asked", label:"요청" },
+  { id:"accepted", label:"수락" },
+  { id:"submitted", label:"제출" }
+];
+const PHD_BACKPLAN = [
+  { key:"faculty", label:"교수 첫 연락", weeksBefore:16 },
+  { key:"sop", label:"SOP 초안", weeksBefore:10 },
+  { key:"recs", label:"추천서 요청", weeksBefore:8 }
+];
+
+const PHD_PROGRAMS_SEED = [
+  { id:"phd-jhu", school:"Johns Hopkins", program:"Health Policy / HPM", tier:"reach", deadline:"2027-12-01", gre:"unknown", advisors:"HPM faculty TBD", funding:"전형적 풀펀딩", status:"researching", notes:"1순위" },
+  { id:"phd-umich", school:"University of Michigan", program:"Health Services Organization & Policy", tier:"match", deadline:"2027-12-01", gre:"unknown", advisors:"", funding:"조교/연구 패키지", status:"researching", notes:"적정" },
+  { id:"phd-umn", school:"University of Minnesota", program:"Health Services Research, Policy & Admin", tier:"match", deadline:"2027-12-01", gre:"unknown", advisors:"", funding:"조교 패키지", status:"researching", notes:"적정" },
+  { id:"phd-bu", school:"Boston University", program:"Health Services Research", tier:"match", deadline:"2027-12-15", gre:"unknown", advisors:"", funding:"펀딩 패키지", status:"researching", notes:"적정" },
+  { id:"phd-pitt", school:"University of Pittsburgh", program:"Health Services Research & Policy", tier:"safety", deadline:"2028-01-15", gre:"unknown", advisors:"", funding:"조교 가능", status:"researching", notes:"안전" }
+];
+
+const PHD_FACULTY_SEED = [
+  { id:"fac-hollin", name:"Dr. Ilene Hollin", school:"Temple / JHU PhD", mailed:"", replied:"", followUp:"", notes:"네트워크 · 추천 가능" },
+  { id:"fac-mullachery", name:"Dr. Pricila Mullachery", school:"Temple", mailed:"", replied:"", followUp:"", notes:"연구 랩" }
+];

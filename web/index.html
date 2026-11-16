@@ -446,6 +446,55 @@
     .class-chip:hover { opacity: 0.85; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
     @media (max-width: 520px) { .form-row { grid-template-columns: 1fr; } }
+    .form-row label, .crm-dates label { font-size: 0.72rem; color: var(--muted); display: block; }
+    .form-row input, .form-row select, .phd-card input, .phd-card select, .rec-row input, .focus-track input, .alloc-h {
+      font: inherit; width: 100%; padding: 0.35rem 0.5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface2); color: var(--text); margin-top: 0.15rem;
+    }
+    .top3-list { list-style: none; display: grid; gap: 0.55rem; }
+    .top3-item { display: flex; gap: 0.7rem; align-items: flex-start; padding: 0.55rem 0.15rem; border-bottom: 1px solid var(--border); }
+    .top3-item:last-child { border-bottom: none; }
+    .top3-n { font-family: "Instrument Serif", Georgia, serif; font-size: 1.6rem; line-height: 1; color: var(--accent2); width: 1.4rem; }
+    .top3-track { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .top3-item.track-asa .top3-track { color: var(--accent); }
+    .top3-item.track-phd .top3-track { color: var(--purple); }
+    .top3-item.track-job .top3-track { color: var(--blue); }
+    .top3-title { font-size: 0.95rem; font-weight: 600; margin-top: 0.1rem; }
+    .alloc-row { margin-bottom: 0.65rem; }
+    .alloc-head { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-bottom: 0.25rem; gap: 0.4rem; }
+    .alloc-h { width: 3.4rem; padding: 0.15rem 0.3rem; margin: 0 0.15rem; display: inline-block; }
+    .focus-track { margin-bottom: 0.85rem; }
+    .focus-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem; }
+    .wait-box { margin-top: 0.4rem; padding: 0.4rem; background: var(--surface2); border-radius: 8px; }
+    .wait-label { font-size: 0.65rem; color: var(--muted); margin-bottom: 0.25rem; }
+    .wait-chip { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; padding: 0.15rem 0.4rem; margin: 0 0.25rem 0.25rem 0; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; }
+    .wait-chip button { border: none; background: none; cursor: pointer; color: var(--muted); font: inherit; }
+    .wait-add { display: flex; gap: 0.3rem; margin-top: 0.3rem; }
+    .wait-add input { flex: 1; }
+    .wait-add button { font: inherit; padding: 0.2rem 0.5rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; }
+    .active-proj { display: flex; gap: 0.5rem; align-items: center; justify-content: space-between; font-size: 0.82rem; padding: 0.4rem 0; border-bottom: 1px solid var(--border); }
+    .active-proj button { font: inherit; font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; }
+    .project-head { display: flex; justify-content: space-between; gap: 0.6rem; align-items: flex-start; }
+    .pin-btn { font: inherit; font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 999px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); cursor: pointer; white-space: nowrap; }
+    .pin-btn.on { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+    .phd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.7rem; }
+    .phd-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem; display: grid; gap: 0.4rem; }
+    .phd-card-top { display: flex; justify-content: space-between; gap: 0.5rem; align-items: flex-start; }
+    .phd-dday { font-family: "Instrument Serif", Georgia, serif; font-size: 1.35rem; color: var(--accent2); line-height: 1; }
+    .tier-pill { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.04em; padding: 0.12rem 0.4rem; border-radius: 999px; margin-right: 0.35rem; }
+    .tier-pill.reach { background: var(--accent2-dim); color: var(--accent2); }
+    .tier-pill.match { background: var(--accent-dim); color: var(--accent); }
+    .tier-pill.safety { background: rgba(90,133,168,0.14); color: var(--blue); }
+    .crm-dates { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.35rem; }
+    @media (max-width: 520px) { .crm-dates { grid-template-columns: 1fr; } }
+    .backplan { display: grid; gap: 0.25rem; margin-top: 0.25rem; }
+    .backplan-item { display: flex; justify-content: space-between; gap: 0.4rem; font-size: 0.75rem; padding: 0.25rem 0.35rem; background: var(--surface); border-radius: 7px; }
+    .backplan-item.due { border: 1px solid var(--warn-border); background: var(--warn-bg); }
+    .backplan-item em { color: var(--muted); font-style: normal; }
+    .rec-row { display: grid; grid-template-columns: 1fr auto; gap: 0.45rem; align-items: center; margin-bottom: 0.4rem; }
+    @media (max-width: 520px) { .rec-row { grid-template-columns: 1fr; } }
+    .rec-steps { display: flex; gap: 0.2rem; flex-wrap: wrap; }
+    .rec-steps button { font: inherit; font-size: 0.68rem; padding: 0.2rem 0.45rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; }
+    .rec-steps button.on { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
     .quick-links { display: flex; flex-wrap: wrap; gap: 0.4rem; }
     .budget-row { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid var(--border); font-size: 0.84rem; }
     .budget-row:last-child { border-bottom: none; font-weight: 600; }
@@ -563,6 +612,25 @@
     <!-- HOME -->
     <section class="panel active" id="panel-home">
       <div class="alert-box" id="urgentAlert" style="display:none"></div>
+
+      <div class="card" style="margin-bottom:0.9rem">
+        <div class="card-title">오늘의 Top 3</div>
+        <ol id="todayTop3" class="top3-list"></ol>
+      </div>
+      <div class="grid grid-3" style="margin-bottom:0.9rem">
+        <div class="card">
+          <div class="card-title">주간 시간 배분</div>
+          <div id="weekAllocBars"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">트랙 포커스 · 대기</div>
+          <div id="weekFocusBoard"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">진행 프로젝트 (최대 2)</div>
+          <div id="activeProjectsDash"></div>
+        </div>
+      </div>
 
       <div class="hero">
         <div class="card hero-main">
@@ -822,6 +890,7 @@
         <div class="stat-sub" style="margin-top:0.45rem">Process progress <strong id="researchProgressLabel" style="color:var(--accent2)">0%</strong></div>
         <div class="progress-wrap" style="margin-top:0.35rem"><div class="progress-bar" id="researchProgressBar" style="width:0%"></div></div>
       </div>
+      <div id="phdTrackerRoot"></div>
       <div id="researchRoot"></div>
     </section>
 
@@ -983,7 +1052,7 @@
   </div>
   <div class="toast" id="toast">저장됨</div>
 
-  <script src="../js/data.js?v=20261116a"></script>
-  <script defer src="../js/app.js?v=20261116a"></script>
+  <script src="../js/data.js?v=20261116b"></script>
+  <script defer src="../js/app.js?v=20261116b"></script>
 </body>
 </html>

@@ -36,12 +36,80 @@ let state;
         budgetSpent:0, pomoLogRange:"week",
         pomodoro:{ workMin:25, breakMin:5, dailyGoal:4, todayCount:0, lastDate:"", topic:"", muted:false },
         stopwatch:{ running:false, startedAt:null, elapsedMs:0, topic:"" },
-        careerPipeline:[], timelineCollapsed:{}
+        careerPipeline:[], timelineCollapsed:{},
+        weeklyPlan: null,
+        activeProjects: DEFAULT_ACTIVE_PROJECTS.slice(),
+        phdTracker: null
       };
     }
 
     function ensureCareer() {
       if (!state.careerPipeline) state.careerPipeline = [];
+    }
+
+    function defaultWeeklyPlan() {
+      return {
+        weekKey: weekKeyFromDate(new Date()),
+        hours: { asa:12, phd:8, job:3 },
+        focus: {
+          asa: "Exam P 순공",
+          phd: "JHU 교수 1명 컨택 초안",
+          job: "온캠/파트타임 1건 준비"
+        },
+        waiting: {
+          asa: ["PAF는 P 이후"],
+          phd: ["SOP 전면 수정", "추천인 2·3 요청"],
+          job: ["커버레터 템플릿"]
+        }
+      };
+    }
+
+    function ensureWeeklyPlan() {
+      if (!state.weeklyPlan) state.weeklyPlan = defaultWeeklyPlan();
+      const p = state.weeklyPlan;
+      if (!p.hours) p.hours = { asa:12, phd:8, job:3 };
+      if (!p.focus) p.focus = { asa:"", phd:"", job:"" };
+      if (!p.waiting) p.waiting = { asa:[], phd:[], job:[] };
+      LIFE_TRACKS.forEach(t => {
+        if (p.hours[t.id] == null) p.hours[t.id] = t.hours;
+        if (p.focus[t.id] == null) p.focus[t.id] = "";
+        if (!Array.isArray(p.waiting[t.id])) p.waiting[t.id] = [];
+      });
+      const key = weekKeyFromDate(new Date());
+      if (p.weekKey !== key) p.weekKey = key;
+    }
+
+    function ensureActiveProjects() {
+      if (!Array.isArray(state.activeProjects)) {
+        state.activeProjects = DEFAULT_ACTIVE_PROJECTS.slice();
+      }
+      state.activeProjects = state.activeProjects.slice(0, MAX_ACTIVE_PROJECTS);
+    }
+
+    function defaultPhdTracker() {
+      return {
+        sopVersion: "v0",
+        recs: [
+          { id:"rec1", name:"", status:"idle" },
+          { id:"rec2", name:"", status:"idle" },
+          { id:"rec3", name:"", status:"idle" }
+        ],
+        faculty: PHD_FACULTY_SEED.map(f => ({ ...f })),
+        programs: PHD_PROGRAMS_SEED.map(p => ({ ...p }))
+      };
+    }
+
+    function ensurePhdTracker() {
+      if (!state.phdTracker) state.phdTracker = defaultPhdTracker();
+      const t = state.phdTracker;
+      if (!t.sopVersion) t.sopVersion = "v0";
+      if (!Array.isArray(t.recs) || t.recs.length < 3) {
+        t.recs = defaultPhdTracker().recs;
+      }
+      if (!Array.isArray(t.faculty)) t.faculty = PHD_FACULTY_SEED.map(f => ({ ...f }));
+      if (!Array.isArray(t.programs) || !t.programs.length) {
+        t.programs = PHD_PROGRAMS_SEED.map(p => ({ ...p }));
+      }
     }
 
     function careerCardHtml(item) {
@@ -240,8 +308,12 @@ let state;
         const stackLine = tools.primary
           ? `Primary: <strong style="color:var(--text)">${escapeHtml(tools.primary)}</strong>${tools.also ? " · " + escapeHtml(tools.also) : ""}`
           : escapeHtml(p.stack || "");
+        const pinned = (state.activeProjects || []).includes(p.id);
         return `<div class="card project-card" data-project="${p.id}">
-          <h3>${escapeHtml(p.title)}</h3>
+          <div class="project-head">
+            <h3>${escapeHtml(p.title)}</h3>
+            <button type="button" class="pin-btn${pinned?" on":""}" data-project-pin="${p.id}">${pinned ? "진행 중" : "대기"}</button>
+          </div>
           <div class="project-meta">
             <strong style="color:var(--accent2)">${escapeHtml(p.priority)}</strong><br/>
             When: ${escapeHtml(p.when)}<br/>
@@ -300,6 +372,199 @@ let state;
           saveState();
           renderProjects();
         };
+      });
+      list.querySelectorAll("[data-project-pin]").forEach(btn => {
+        btn.onclick = e => {
+          e.preventDefault();
+          toggleProjectPin(btn.dataset.projectPin);
+        };
+      });
+    }
+
+    function toggleProjectPin(id) {
+      ensureActiveProjects();
+      const i = state.activeProjects.indexOf(id);
+      if (i >= 0) {
+        state.activeProjects.splice(i, 1);
+        saveState();
+        return;
+      }
+      if (state.activeProjects.length >= MAX_ACTIVE_PROJECTS) {
+        toast("동시에 큰 프로젝트는 2개까지");
+        return;
+      }
+      state.activeProjects.push(id);
+      saveState();
+    }
+
+    function addDaysIso(iso, n) {
+      const d = parseLocalDate(iso);
+      if (isNaN(d.getTime())) return "";
+      d.setDate(d.getDate() + n);
+      return localDateStr(d);
+    }
+
+    function classifyStudyTrack(log) {
+      if (!log) return "asa";
+      if (log.track && LIFE_TRACKS.some(t => t.id === log.track)) return log.track;
+      const raw = String(log.topic || "");
+      const t = raw.toLowerCase();
+      if (/phd|jhu|sop|추천|교수|연구|mullachery|hollin|gre|논문|\blab\b|health policy/.test(t)) return "phd";
+      if (/취업|인턴|잡서치|resume|linkedin|cover|커리어|온캠|파트타임|네트워킹|커피챗/.test(t)) return "job";
+      return "asa";
+    }
+
+    function weekTrackMinutes() {
+      const weekStart = getWeekStart();
+      const out = { asa:0, phd:0, job:0 };
+      (state.studyLogs || []).forEach(l => {
+        if (parseLocalDate(l.date) < weekStart) return;
+        const tr = classifyStudyTrack(l);
+        out[tr] = (out[tr] || 0) + (+l.minutes || 0);
+      });
+      return out;
+    }
+
+    function todayTop3() {
+      ensureWeeklyPlan();
+      ensurePhdTracker();
+      const p = state.weeklyPlan;
+      const asap = getUpcomingMilestones(1)[0];
+      const nextPhd = (state.phdTracker.programs || [])
+        .filter(x => x.deadline && x.status !== "submitted" && x.status !== "accepted" && x.status !== "rejected")
+        .sort((a, b) => String(a.deadline).localeCompare(String(b.deadline)))[0];
+      const jobItem = (state.careerPipeline || []).find(x => !CAREER_CLOSED_STATUSES.includes(x.status));
+      return LIFE_TRACKS.map(t => {
+        const focus = (p.focus[t.id] || "").trim();
+        let fallback = "";
+        if (t.id === "asa") fallback = asap ? asap.label + " · " + asap.date : "Exam P";
+        if (t.id === "phd") fallback = nextPhd ? nextPhd.school + " D-" + daysUntil(nextPhd.deadline) : "프로그램 조사";
+        if (t.id === "job") fallback = jobItem ? jobItem.company + " · " + (jobItem.role || "") : "온캠/파트타임 1건";
+        return { track: t.id, label: t.label, title: focus || fallback };
+      });
+    }
+
+    function phdBackplan(deadline) {
+      if (!deadline) return [];
+      return PHD_BACKPLAN.map(b => {
+        const date = addDaysIso(deadline, -b.weeksBefore * 7);
+        return { ...b, date, days: date ? daysUntil(date) : null };
+      });
+    }
+
+    function renderLifeOps() {
+      ensureWeeklyPlan();
+      ensureActiveProjects();
+      const p = state.weeklyPlan;
+      const logged = weekTrackMinutes();
+      const topEl = document.getElementById("todayTop3");
+      if (topEl) {
+        topEl.innerHTML = todayTop3().map((item, i) =>
+          `<li class="top3-item track-${item.track}">
+            <span class="top3-n">${i + 1}</span>
+            <div>
+              <div class="top3-track">${escapeHtml(item.label)}</div>
+              <div class="top3-title">${escapeHtml(item.title)}</div>
+            </div>
+          </li>`).join("");
+      }
+      const bars = document.getElementById("weekAllocBars");
+      if (bars) {
+        bars.innerHTML = LIFE_TRACKS.map(t => {
+          const goalH = +p.hours[t.id] || 0;
+          const doneH = (logged[t.id] || 0) / 60;
+          const pct = goalH ? Math.min(100, Math.round(doneH / goalH * 100)) : 0;
+          return `<div class="alloc-row">
+            <div class="alloc-head">
+              <span>${escapeHtml(t.label)}</span>
+              <span>${minutesToHoursLabel(logged[t.id] || 0)}h / <input type="number" min="0" step="0.5" class="alloc-h" data-alloc="${t.id}" value="${goalH}">h</span>
+            </div>
+            <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%;background:${t.color}"></div></div>
+          </div>`;
+        }).join("");
+      }
+      const board = document.getElementById("weekFocusBoard");
+      if (board) {
+        board.innerHTML = LIFE_TRACKS.map(t => {
+          const waits = p.waiting[t.id] || [];
+          return `<div class="focus-track">
+            <div class="focus-label">${escapeHtml(t.label)} · 이번 주 1개</div>
+            <input type="text" data-focus="${t.id}" value="${escapeHtml(p.focus[t.id] || "")}" placeholder="이번 주 가장 중요한 일 1개"/>
+            <div class="wait-box">
+              <div class="wait-label">대기</div>
+              ${waits.map((w, i) => `<span class="wait-chip">${escapeHtml(w)} <button type="button" data-wait-del="${t.id}" data-i="${i}">×</button></span>`).join("")}
+              <div class="wait-add">
+                <input type="text" data-wait-in="${t.id}" placeholder="대기 항목"/>
+                <button type="button" data-wait-add="${t.id}">+</button>
+              </div>
+            </div>
+          </div>`;
+        }).join("");
+      }
+      const projEl = document.getElementById("activeProjectsDash");
+      if (projEl) {
+        const pins = state.activeProjects || [];
+        const catalog = typeof PERSONAL_PROJECTS !== "undefined" ? PERSONAL_PROJECTS : [];
+        if (!pins.length) {
+          projEl.innerHTML = `<p class="stat-sub" style="margin:0">진행 중 없음 · Project 탭에서 「진행 중」으로 올리기 (최대 ${MAX_ACTIVE_PROJECTS})</p>`;
+        } else {
+          projEl.innerHTML = pins.map(id => {
+            const pr = catalog.find(x => x.id === id);
+            const title = pr ? pr.title : id;
+            const stepsDone = pr ? (pr.steps || []).filter(s => isProjectStepDone(pr.id, s.id)).length : 0;
+            const stepsTotal = pr ? (pr.steps || []).length : 0;
+            return `<div class="active-proj">
+              <strong>${escapeHtml(title)}</strong>
+              <span>${stepsDone}/${stepsTotal}</span>
+              <button type="button" data-project-pin="${id}">대기로</button>
+            </div>`;
+          }).join("");
+        }
+      }
+    }
+
+    function bindLifeOps() {
+      if (bindLifeOps.done) return;
+      bindLifeOps.done = true;
+      const home = document.getElementById("panel-home");
+      if (!home) return;
+      home.addEventListener("change", e => {
+        const alloc = e.target.closest("[data-alloc]");
+        if (alloc) {
+          ensureWeeklyPlan();
+          const n = +alloc.value;
+          state.weeklyPlan.hours[alloc.dataset.alloc] = Number.isFinite(n) && n >= 0 ? n : 0;
+          saveState(true);
+          return;
+        }
+        const focus = e.target.closest("[data-focus]");
+        if (focus) {
+          ensureWeeklyPlan();
+          state.weeklyPlan.focus[focus.dataset.focus] = focus.value.trim();
+          saveState(true);
+        }
+      });
+      home.addEventListener("click", e => {
+        const add = e.target.closest("[data-wait-add]");
+        if (add) {
+          ensureWeeklyPlan();
+          const id = add.dataset.waitAdd;
+          const inp = home.querySelector(`[data-wait-in="${id}"]`);
+          const text = inp ? inp.value.trim() : "";
+          if (!text) { toast("대기 항목 입력"); return; }
+          state.weeklyPlan.waiting[id].push(text);
+          saveState();
+          return;
+        }
+        const del = e.target.closest("[data-wait-del]");
+        if (del) {
+          ensureWeeklyPlan();
+          state.weeklyPlan.waiting[del.dataset.waitDel].splice(+del.dataset.i, 1);
+          saveState();
+          return;
+        }
+        const pin = e.target.closest("#activeProjectsDash [data-project-pin]");
+        if (pin) toggleProjectPin(pin.dataset.projectPin);
       });
     }
 
@@ -409,6 +674,203 @@ let state;
           renderResearch();
         };
       });
+      renderPhdTracker();
+    }
+
+    function greOptions(cur) {
+      return Object.keys(PHD_GRE_LABELS).map(k =>
+        `<option value="${k}" ${cur===k?"selected":""}>${PHD_GRE_LABELS[k]}</option>`).join("");
+    }
+    function phdStatusOptions(cur) {
+      return Object.keys(PHD_STATUS_LABELS).map(k =>
+        `<option value="${k}" ${cur===k?"selected":""}>${PHD_STATUS_LABELS[k]}</option>`).join("");
+    }
+    function phdTierOptions(cur) {
+      return Object.keys(PHD_TIER_LABELS).map(k =>
+        `<option value="${k}" ${cur===k?"selected":""}>${PHD_TIER_LABELS[k]}</option>`).join("");
+    }
+
+    function renderPhdTracker() {
+      ensurePhdTracker();
+      const root = document.getElementById("phdTrackerRoot");
+      if (!root) return;
+      const t = state.phdTracker;
+      const programs = t.programs || [];
+      const recsHtml = t.recs.map(r => `
+        <div class="rec-row">
+          <input type="text" data-rec-name="${r.id}" value="${escapeHtml(r.name || "")}" placeholder="추천인 이름"/>
+          <div class="rec-steps">
+            ${PHD_REC_STATUSES.map(s => `<button type="button" class="${r.status===s.id?"on":""}" data-rec-st="${r.id}" data-st="${s.id}">${s.label}</button>`).join("")}
+          </div>
+        </div>`).join("");
+      const facultyHtml = t.faculty.map(f => `
+        <div class="phd-card">
+          <div class="phd-card-top">
+            <input type="text" data-fac-f="name" data-fac-id="${f.id}" value="${escapeHtml(f.name || "")}" placeholder="교수 이름"/>
+            <button type="button" data-fac-del="${f.id}">삭제</button>
+          </div>
+          <input type="text" data-fac-f="school" data-fac-id="${f.id}" value="${escapeHtml(f.school || "")}" placeholder="소속"/>
+          <div class="crm-dates">
+            <label>첫 메일 <input type="date" data-fac-f="mailed" data-fac-id="${f.id}" value="${f.mailed || ""}"/></label>
+            <label>답장 <input type="date" data-fac-f="replied" data-fac-id="${f.id}" value="${f.replied || ""}"/></label>
+            <label>후속 <input type="date" data-fac-f="followUp" data-fac-id="${f.id}" value="${f.followUp || ""}"/></label>
+          </div>
+          <input type="text" data-fac-f="notes" data-fac-id="${f.id}" value="${escapeHtml(f.notes || "")}" placeholder="메모"/>
+        </div>`).join("");
+      const progHtml = programs.map(pr => {
+        const plan = phdBackplan(pr.deadline);
+        const dd = pr.deadline ? fmtDday(daysUntil(pr.deadline)) : "—";
+        return `<div class="phd-card">
+          <div class="phd-card-top">
+            <div>
+              <span class="tier-pill ${pr.tier}">${PHD_TIER_LABELS[pr.tier] || pr.tier}</span>
+              <strong>${escapeHtml(pr.school)}</strong>
+              <span class="stat-sub">${escapeHtml(pr.program || "")}</span>
+            </div>
+            <div class="phd-dday">${dd}</div>
+          </div>
+          <div class="form-row">
+            <div><label>학교</label><input type="text" data-pr-f="school" data-pr-id="${pr.id}" value="${escapeHtml(pr.school || "")}"/></div>
+            <div><label>프로그램</label><input type="text" data-pr-f="program" data-pr-id="${pr.id}" value="${escapeHtml(pr.program || "")}"/></div>
+          </div>
+          <div class="form-row">
+            <div><label>마감</label><input type="date" data-pr-f="deadline" data-pr-id="${pr.id}" value="${pr.deadline || ""}"/></div>
+            <div><label>티어</label><select data-pr-f="tier" data-pr-id="${pr.id}">${phdTierOptions(pr.tier)}</select></div>
+          </div>
+          <div class="form-row">
+            <div><label>GRE</label><select data-pr-f="gre" data-pr-id="${pr.id}">${greOptions(pr.gre)}</select></div>
+            <div><label>상태</label><select data-pr-f="status" data-pr-id="${pr.id}">${phdStatusOptions(pr.status)}</select></div>
+          </div>
+          <input type="text" data-pr-f="advisors" data-pr-id="${pr.id}" value="${escapeHtml(pr.advisors || "")}" placeholder="지도교수 후보"/>
+          <input type="text" data-pr-f="funding" data-pr-id="${pr.id}" value="${escapeHtml(pr.funding || "")}" placeholder="펀딩"/>
+          <input type="text" data-pr-f="notes" data-pr-id="${pr.id}" value="${escapeHtml(pr.notes || "")}" placeholder="메모"/>
+          <div class="backplan">
+            ${plan.map(b => `<div class="backplan-item${b.days != null && b.days <= 14 && b.days >= 0 ? " due" : ""}">
+              <span>${escapeHtml(b.label)}</span>
+              <strong>${b.date || "—"}</strong>
+              <em>${b.days == null ? "" : fmtDday(b.days)}</em>
+            </div>`).join("")}
+          </div>
+          <button type="button" data-pr-del="${pr.id}">프로그램 삭제</button>
+        </div>`;
+      }).join("");
+      root.innerHTML = `
+        <div class="card" style="margin-bottom:0.9rem">
+          <div class="card-title">박사 지원 트래커 · Fall 2028</div>
+          <p class="stat-sub" style="margin:0 0 0.65rem;line-height:1.5">JHU 1순위 + 적정/안전 3~5곳. 마감에서 역산한 교수 연락 · SOP · 추천서 시점을 같이 봅니다.</p>
+          <div class="form-row" style="align-items:end">
+            <div>
+              <label>SOP 버전</label>
+              <input type="text" id="phdSopVersion" value="${escapeHtml(t.sopVersion || "v0")}" placeholder="v1"/>
+            </div>
+          </div>
+          <div class="card-title" style="margin-top:0.85rem">추천인 3명</div>
+          ${recsHtml}
+        </div>
+        <div class="card" style="margin-bottom:0.9rem">
+          <div class="card-title">교수 연락 CRM</div>
+          <div class="phd-grid">${facultyHtml}</div>
+          <div class="form-row" style="margin-top:0.55rem">
+            <div><input type="text" id="phdFacName" placeholder="교수 이름"/></div>
+            <div><input type="text" id="phdFacSchool" placeholder="소속"/></div>
+          </div>
+          <button type="button" id="btnPhdFacAdd" class="btn-action" style="margin-top:0.4rem">교수 추가</button>
+        </div>
+        <div class="card-title" style="margin:0.2rem 0 0.65rem">프로그램</div>
+        <div class="phd-grid">${progHtml}</div>
+        <div class="card" style="margin-top:0.9rem">
+          <div class="card-title">프로그램 추가</div>
+          <div class="form-row">
+            <div><input type="text" id="phdAddSchool" placeholder="학교"/></div>
+            <div><input type="text" id="phdAddProgram" placeholder="프로그램"/></div>
+          </div>
+          <div class="form-row">
+            <div><label>마감</label><input type="date" id="phdAddDeadline"/></div>
+            <div><label>티어</label><select id="phdAddTier">${phdTierOptions("match")}</select></div>
+          </div>
+          <button type="button" id="btnPhdAdd" class="btn-action" style="margin-top:0.4rem">추가</button>
+        </div>`;
+      bindPhdTracker();
+    }
+
+    function bindPhdTracker() {
+      const root = document.getElementById("phdTrackerRoot");
+      if (!root) return;
+      const sop = document.getElementById("phdSopVersion");
+      if (sop) sop.onchange = () => {
+        ensurePhdTracker();
+        state.phdTracker.sopVersion = sop.value.trim() || "v0";
+        saveState(true);
+      };
+      root.querySelectorAll("[data-rec-name]").forEach(inp => {
+        inp.onchange = () => {
+          const rec = state.phdTracker.recs.find(x => x.id === inp.dataset.recName);
+          if (rec) { rec.name = inp.value.trim(); saveState(true); }
+        };
+      });
+      root.querySelectorAll("[data-rec-st]").forEach(btn => {
+        btn.onclick = () => {
+          const rec = state.phdTracker.recs.find(x => x.id === btn.dataset.recSt);
+          if (rec) { rec.status = btn.dataset.st; saveState(); }
+        };
+      });
+      root.querySelectorAll("[data-fac-f]").forEach(inp => {
+        inp.onchange = () => {
+          const f = state.phdTracker.faculty.find(x => x.id === inp.dataset.facId);
+          if (f) { f[inp.dataset.facF] = inp.value; saveState(true); }
+        };
+      });
+      root.querySelectorAll("[data-fac-del]").forEach(btn => {
+        btn.onclick = () => {
+          state.phdTracker.faculty = state.phdTracker.faculty.filter(x => x.id !== btn.dataset.facDel);
+          saveState();
+        };
+      });
+      const facAdd = document.getElementById("btnPhdFacAdd");
+      if (facAdd) facAdd.onclick = () => {
+        const name = (document.getElementById("phdFacName").value || "").trim();
+        if (!name) { toast("교수 이름 입력"); return; }
+        state.phdTracker.faculty.push({
+          id: uid(), name,
+          school: (document.getElementById("phdFacSchool").value || "").trim(),
+          mailed:"", replied:"", followUp:"", notes:""
+        });
+        document.getElementById("phdFacName").value = "";
+        document.getElementById("phdFacSchool").value = "";
+        saveState();
+      };
+      root.querySelectorAll("[data-pr-f]").forEach(inp => {
+        inp.onchange = () => {
+          const pr = state.phdTracker.programs.find(x => x.id === inp.dataset.prId);
+          if (pr) { pr[inp.dataset.prF] = inp.value; saveState(true); }
+        };
+      });
+      root.querySelectorAll("[data-pr-del]").forEach(btn => {
+        btn.onclick = () => {
+          state.phdTracker.programs = state.phdTracker.programs.filter(x => x.id !== btn.dataset.prDel);
+          saveState();
+        };
+      });
+      const add = document.getElementById("btnPhdAdd");
+      if (add) add.onclick = () => {
+        const school = (document.getElementById("phdAddSchool").value || "").trim();
+        if (!school) { toast("학교명 입력"); return; }
+        state.phdTracker.programs.push({
+          id: uid(),
+          school,
+          program: (document.getElementById("phdAddProgram").value || "").trim(),
+          tier: document.getElementById("phdAddTier").value || "match",
+          deadline: document.getElementById("phdAddDeadline").value || "",
+          gre: "unknown",
+          advisors: "",
+          funding: "",
+          status: "researching",
+          notes: ""
+        });
+        document.getElementById("phdAddSchool").value = "";
+        document.getElementById("phdAddProgram").value = "";
+        saveState();
+      };
     }
 
     function bindCareerForm() {
@@ -1183,6 +1645,7 @@ let state;
     }
 
     function renderDashboard() {
+      renderLifeOps();
       const asa = getProgress(asaReqIds());
       const full = getProgress(allReqIds());
       const remaining = 100 - asa.pct;
@@ -2950,6 +3413,7 @@ let state;
 
       initCloudSync();
       bindCareerForm();
+      bindLifeOps();
 
       document.getElementById("studyGoalInput").addEventListener("change", e => {
         state.weeklyStudyGoal = hoursInputToMinutes(e.target.value, DEFAULT_WEEKLY_STUDY_GOAL);
