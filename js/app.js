@@ -1894,6 +1894,7 @@ let state;
     let pomoAwaitingAck = false;
     let pomoEndedAsBreak = false;
     let pomoOvertime = false;
+    let pomoOvertimeKind = null;
     let pomoOvertimeSince = null;
     let pomoAudioCtx = null;
     const POMO_RING_CIRC = 2 * Math.PI * 54;
@@ -2013,8 +2014,15 @@ let state;
       document.title = POMO_BASE_TITLE;
     }
 
+    function isWorkOvertime() {
+      return pomoOvertime && pomoOvertimeKind === "work";
+    }
+
     function runningTitleText(left) {
-      if (pomoOvertime) return `휴식 초과 +${formatPomo(getPomoOvertimeSec())}`;
+      if (pomoOvertime) {
+        const tag = isWorkOvertime() ? "집중 초과" : "휴식 초과";
+        return `${tag} +${formatPomo(getPomoOvertimeSec())}`;
+      }
       const label = pomoMode === "work" ? "집중중" : "휴식중";
       const sec = left == null ? getPomoRemainingSec() : left;
       return `${label} ${formatPomo(Math.max(0, sec))}`;
@@ -2039,6 +2047,7 @@ let state;
 
     function acknowledgePomoEnd() {
       if (pomoOvertime) {
+        if (isWorkOvertime()) return;
         finishBreakOvertime();
         return;
       }
@@ -2367,6 +2376,36 @@ let state;
       pomoInterval = setInterval(updatePomoFromClock, 250);
     }
 
+    function getPomoOvertimeMinutes() {
+      return Math.round(getPomoOvertimeSec() / 60);
+    }
+
+    function syncPomoWorkOverChoice() {
+      const box = document.getElementById("pomoWorkOverChoice");
+      if (!box) return;
+      const show = isWorkOvertime();
+      box.hidden = !show;
+      if (!show) return;
+      ensurePomodoro();
+      const workMin = +(state.pomodoro.workMin || 25);
+      const overMin = getPomoOvertimeMinutes();
+      const hint = document.getElementById("pomoWorkOverHint");
+      if (hint) {
+        hint.textContent = overMin
+          ? `초과 +${formatPomo(getPomoOvertimeSec())} · 약 ${overMin}분`
+          : "계획 시간 끝 · 초과는 아직 1분 미만";
+      }
+      const plannedBtn = document.getElementById("btnPomoLogPlanned");
+      const extraBtn = document.getElementById("btnPomoLogWithOver");
+      if (plannedBtn) plannedBtn.textContent = overMin
+        ? `계획 ${workMin}분만 기록 · 휴식`
+        : `${workMin}분 기록 · 휴식`;
+      if (extraBtn) {
+        extraBtn.hidden = overMin < 1;
+        extraBtn.textContent = `${workMin + overMin}분 기록 (초과 포함) · 휴식`;
+      }
+    }
+
     function setPomoUi(left) {
       const overtime = pomoOvertime ? getPomoOvertimeSec() : 0;
       const total = pomoPhaseTotalSec || getPomoPhaseTotalSec();
@@ -2376,7 +2415,9 @@ let state;
         : formatPomo(left);
       const modeLabel = document.getElementById("pomoModeLabel");
       if (modeLabel) {
-        if (pomoOvertime) {
+        if (isWorkOvertime()) {
+          modeLabel.textContent = "집중 초과";
+        } else if (pomoOvertime) {
           modeLabel.textContent = "휴식 초과";
         } else if (pomoAwaitingAck) {
           modeLabel.textContent = pomoEndedAsBreak ? "휴식 끝 · 탭 터치" : "집중 완료 · 탭 터치";
@@ -2384,7 +2425,7 @@ let state;
           modeLabel.textContent = pomoMode === "work" ? "집중" : "휴식";
         }
       }
-      document.getElementById("btnPomoStart").hidden = pomoRunning && !pomoOvertime;
+      document.getElementById("btnPomoStart").hidden = (pomoRunning && !pomoOvertime) || isWorkOvertime();
       document.getElementById("btnPomoPause").hidden = !pomoRunning || pomoOvertime;
       const ring = document.getElementById("pomoRingFg");
       if (ring) {
@@ -2396,29 +2437,24 @@ let state;
       const hero = document.getElementById("pomoHero");
       if (hero) {
         hero.classList.toggle("running", pomoRunning || pomoOvertime);
-        hero.classList.toggle("break-mode", pomoMode === "break" || pomoOvertime);
-        hero.classList.toggle("awaiting-ack", pomoAwaitingAck || pomoOvertime);
+        hero.classList.toggle("break-mode", (pomoMode === "break" || pomoOvertime) && !isWorkOvertime());
+        hero.classList.toggle("awaiting-ack", (pomoAwaitingAck || pomoOvertime) && !isWorkOvertime());
       }
       const startBtn = document.getElementById("btnPomoStart");
       if (startBtn) {
-        startBtn.textContent = pomoOvertime
+        startBtn.textContent = pomoOvertime && !isWorkOvertime()
           ? "▶ 집중 시작"
           : (pomoRunning ? "진행 중…" : (pomoAwaitingAck ? "▶ 탭해서 확인" : "▶ 시작"));
       }
+      syncPomoWorkOverChoice();
       syncPomoMuteBtn();
       if (pomoOvertime || !pomoAwaitingAck) syncPomoTitle(left);
     }
 
     function advancePomoPhase() {
       if (pomoMode === "work") {
-        const count = completePomoWork();
-        pomoEndedAsBreak = false;
-        pomoMode = "break";
-        pomoPhaseTotalSec = (state.pomodoro.breakMin || 5) * 60;
-        pomoRemainingSec = pomoPhaseTotalSec;
-        toast(POMO_WIN_MSGS[(count - 1) % POMO_WIN_MSGS.length] + ` · 오늘 ${count}회`);
-        playPomoChime("work-end");
-        startPomoTitleBlink("✓ 집중 완료! 휴식 시작", false);
+        startWorkOvertime();
+        return;
       } else {
         pomoEndedAsBreak = true;
         pomoMode = "work";
@@ -2452,8 +2488,47 @@ let state;
       setPomoUi(left);
     }
 
+    function startWorkOvertime() {
+      pomoOvertime = true;
+      pomoOvertimeKind = "work";
+      pomoOvertimeSince = pomoEndAt || Date.now();
+      pomoRunning = false;
+      pomoEndAt = null;
+      pomoRemainingSec = 0;
+      pomoEndedAsBreak = false;
+      pomoAwaitingAck = true;
+      playPomoChime("work-end");
+      toast("집중 끝 — 초과 시간 측정 중");
+      startPomoTitleRun();
+      if (!pomoInterval) startPomoTicker();
+      setPomoUi(0);
+    }
+
+    function finishWorkOvertime(includeOvertime) {
+      if (!isWorkOvertime()) return;
+      const extraMin = includeOvertime ? getPomoOvertimeMinutes() : 0;
+      const count = completePomoWork(extraMin);
+      pomoOvertime = false;
+      pomoOvertimeKind = null;
+      pomoOvertimeSince = null;
+      pomoAwaitingAck = false;
+      pomoEndedAsBreak = false;
+      pomoMode = "break";
+      pomoPhaseTotalSec = (state.pomodoro.breakMin || 5) * 60;
+      pomoRemainingSec = pomoPhaseTotalSec;
+      pomoRunning = false;
+      pomoEndAt = null;
+      stopPomoTicker();
+      stopAllPomoTitles();
+      setPomoUi(pomoRemainingSec);
+      renderPomodoroStats();
+      const extraBit = extraMin ? ` · 초과 ${extraMin}분 포함` : (includeOvertime ? "" : " · 계획만");
+      toast(POMO_WIN_MSGS[(count - 1) % POMO_WIN_MSGS.length] + ` · 오늘 ${count}회${extraBit}`);
+    }
+
     function startBreakOvertime() {
       pomoOvertime = true;
+      pomoOvertimeKind = "break";
       pomoOvertimeSince = pomoEndAt || Date.now();
       pomoRunning = false;
       pomoEndAt = null;
@@ -2469,6 +2544,7 @@ let state;
 
     function finishBreakOvertime() {
       pomoOvertime = false;
+      pomoOvertimeKind = null;
       pomoOvertimeSince = null;
       pomoAwaitingAck = false;
       pomoEndedAsBreak = false;
@@ -2484,10 +2560,12 @@ let state;
 
     function clearPomoOvertime() {
       pomoOvertime = false;
+      pomoOvertimeKind = null;
       pomoOvertimeSince = null;
     }
 
     function switchToPomoBreak() {
+      if (isWorkOvertime()) { toast("초과 포함 여부를 먼저 골라 주세요"); return; }
       ensurePomodoro();
       clearPomoOvertime();
       pomoAwaitingAck = false;
@@ -2503,6 +2581,7 @@ let state;
     }
 
     function resetPomoDisplay() {
+      if (isWorkOvertime()) { toast("초과 포함 여부를 먼저 골라 주세요"); return; }
       ensurePomodoro();
       clearPomoOvertime();
       pomoAwaitingAck = false;
@@ -2517,7 +2596,7 @@ let state;
       setPomoUi(pomoRemainingSec);
     }
 
-    function completePomoWork() {
+    function completePomoWork(extraMin) {
       ensurePomodoro();
       const today = localDateStr();
       if (state.pomodoro.lastDate !== today) state.pomodoro.todayCount = 0;
@@ -2525,14 +2604,17 @@ let state;
       state.pomodoro.lastDate = today;
       const count = state.pomodoro.todayCount;
       const workMin = +(state.pomodoro.workMin || 25);
+      const extra = Math.max(0, +extraMin || 0);
+      const minutes = workMin + extra;
       const topic = (document.getElementById("pomoTopic")?.value || state.pomodoro.topic || "").trim();
       state.pomodoro.topic = topic;
+      const extraLabel = extra ? ` (+${extra}분 초과)` : "";
       if (!state.studyLogs) state.studyLogs = [];
       state.studyLogs.push({
         id: newStudyLogId(),
         date: today,
-        minutes: workMin,
-        topic: topic ? `Pomodoro: ${topic}` : "Pomodoro 집중"
+        minutes,
+        topic: (topic ? `Pomodoro: ${topic}` : "Pomodoro 집중") + extraLabel
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       scheduleCloudSync();
@@ -2705,6 +2787,7 @@ let state;
       bindFocusTools.done = true;
 
       document.getElementById("btnPomoStart").onclick = () => {
+        if (isWorkOvertime()) return;
         if (pomoOvertime) finishBreakOvertime();
         else if (pomoAwaitingAck) {
           acknowledgePomoEnd();
@@ -2740,8 +2823,18 @@ let state;
         stopPomoTicker();
         setPomoUi(pomoRemainingSec);
       };
-      document.getElementById("btnPomoReset").onclick = () => resetPomoDisplay();
-      document.getElementById("btnPomoBreak").onclick = () => switchToPomoBreak();
+      document.getElementById("btnPomoReset").onclick = () => {
+        if (isWorkOvertime()) { toast("초과 포함 여부를 먼저 골라 주세요"); return; }
+        resetPomoDisplay();
+      };
+      document.getElementById("btnPomoBreak").onclick = () => {
+        if (isWorkOvertime()) { toast("초과 포함 여부를 먼저 골라 주세요"); return; }
+        switchToPomoBreak();
+      };
+      const plannedBtn = document.getElementById("btnPomoLogPlanned");
+      const extraBtn = document.getElementById("btnPomoLogWithOver");
+      if (plannedBtn) plannedBtn.onclick = () => finishWorkOvertime(false);
+      if (extraBtn) extraBtn.onclick = () => finishWorkOvertime(true);
       document.getElementById("btnPomoMute").onclick = () => {
         ensurePomodoro();
         state.pomodoro.muted = !state.pomodoro.muted;

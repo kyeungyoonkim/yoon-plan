@@ -280,6 +280,10 @@
     }
     .pomo-topic:focus { box-shadow: 0 0 0 2px var(--accent-dim); }
     .pomo-actions { display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.4rem; }
+    .pomo-over-choice { display: grid; gap: 0.35rem; margin: 0 0 0.55rem; }
+    .pomo-over-choice[hidden] { display: none; }
+    .pomo-over-choice .btn-pomo-go { width: 100%; }
+    .pomo-hero.running:not(.break-mode) .pomo-over-choice .stat-sub { color: var(--accent); }
     .timer-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; align-items: start; }
     @media (max-width: 720px) { .timer-pair { grid-template-columns: 1fr; } }
     .pomo-time-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin: 0 0 0.5rem; }
@@ -772,6 +776,11 @@
           <button type="button" class="btn-action" id="btnPomoBreak">휴식</button>
           <button type="button" class="btn-action" id="btnPomoMute" aria-pressed="false" title="알림음 끄기">무음</button>
         </div>
+        <div id="pomoWorkOverChoice" class="pomo-over-choice" hidden>
+          <div class="stat-sub" id="pomoWorkOverHint" style="text-align:center;margin:0">집중 초과</div>
+          <button type="button" class="btn-action" id="btnPomoLogPlanned">계획만 기록 · 휴식</button>
+          <button type="button" class="btn-pomo-go" id="btnPomoLogWithOver">초과 포함 · 휴식</button>
+        </div>
         <div class="pomo-time-settings">
           <div><label>집중(분)</label><input type="number" id="pomoWorkMin" min="5" max="90" value="25" /></div>
           <div><label>휴식(분)</label><input type="number" id="pomoBreakMin" min="1" max="30" value="5" /></div>
@@ -1060,7 +1069,7 @@
   </div>
   <div class="toast" id="toast">저장됨</div>
 
-  <script src="../js/data.js?v=20261116c"></script>
-  <script defer src="../js/app.js?v=20261116c"></script>
+  <script src="../js/data.js?v=20261116d"></script>
+  <script defer src="../js/app.js?v=20261116d"></script>
 </body>
 </html>
